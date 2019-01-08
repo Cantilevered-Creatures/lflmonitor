@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory
 
 from concurrent.futures import ThreadPoolExecutor, Future
 executor = ThreadPoolExecutor(1)
@@ -62,6 +62,10 @@ def takepicture(imageName: str):
     filename = '%s.jpg' % imageName
     print(filename)
     camera.capture(filename)
+
+@app.route('/images/<path:filepath>')
+def images(filepath):
+    return send_from_directory('images', filepath)
 
 def doorSwitch_callback(channel):
   executor.submit(rainbow)
