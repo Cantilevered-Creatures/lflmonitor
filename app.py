@@ -76,7 +76,7 @@ def doorSwitch_callback(channel):
   start_time = datetime.datetime.now()
 
   tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-
+  print(GPIO.input(doorSwitch))
   while(GPIO.input(doorSwitch) and tSeconds < 300):
     takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
     time.sleep(2)
