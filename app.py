@@ -9,6 +9,7 @@ import datetime
 import math
 
 import RPi.GPIO as GPIO
+import picamera
 
 import blinkt
 
@@ -45,7 +46,7 @@ def rainbow(runSeconds: int = 5):
 
     # Increment brightness over the run
     blinkt.set_brightness(math.ceil(tSeconds/runSeconds*10)/10)
-    print(math.ceil(tSeconds/runSeconds*10)/10)
+    #print(math.ceil(tSeconds/runSeconds*10)/10)
 
     blinkt.show()
     time.sleep(0.001)
@@ -53,6 +54,13 @@ def rainbow(runSeconds: int = 5):
 
   blinkt.clear()
   blinkt.show()
+
+def takepicture(imageName: str):
+  with picamera.PiCamera() as camera:
+    camera.resolution = (1920, 1080)
+    time.sleep(1) # Camera warm-up time
+    filename = '%s.jpg' % imageName
+    camera.capture(filename)
 
 def doorSwitch_callback(channel):
   executor.submit(rainbow)
@@ -72,10 +80,11 @@ def index():
     return render_template('index.html', **templateData)
     
   if request.form['submit'] == 'Rainbow':
-    executor.submit(rainbow, request.form['secRainbow'])
+    executor.submit(rainbow, int(request.form['secRainbow']))
+  elif request.form['submit'] == 'Take Picture':
+    takepicture('./images/test.jpg')
   
   return redirect(url_for('index'))
-  
 
 GPIO.add_event_detect(2, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=300)
 
