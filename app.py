@@ -60,6 +60,7 @@ def takepicture(imageName: str):
     camera.resolution = (1920, 1080)
     time.sleep(1) # Camera warm-up time
     filename = '%s.jpg' % imageName
+    print(filename)
     camera.capture(filename)
 
 def doorSwitch_callback(channel):
