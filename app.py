@@ -20,6 +20,7 @@ GPIO.setwarnings(False)
 
 doorSwitch=2
 doorSwitchSTS = GPIO.LOW
+doorRunning = False
 
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -69,33 +70,38 @@ def images(filepath):
     return send_from_directory('images', filepath)
 
 def doorSwitch_callback(channel):
-  rainbow(5, False)
-  blinkt.set_all(255, 255, 255, 1.0)
-  blinkt.show()
+  if doorRunning == False:
+    doorRunning = True
 
-  start_time = datetime.datetime.now()
-
-  tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-  print(GPIO.input(doorSwitch))
-  while(GPIO.input(doorSwitch) and tSeconds < 300):
-    takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
-    time.sleep(2)
-    tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-
-  time.sleep(5)
-
-  takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
-
-  brightness = 1.0
-
-  while(brightness > 0):
-    blinkt.BRIGHTNESS = brightness
+    rainbow(5, False)
+    blinkt.set_all(255, 255, 255, 1.0)
     blinkt.show()
-    time.sleep(0.1)
-    brightness = brightness - 0.1
 
-  blinkt.clear()
-  blinkt.show()
+    start_time = datetime.datetime.now()
+
+    tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+    print(GPIO.input(doorSwitch))
+    while(GPIO.input(doorSwitch) == 0 and tSeconds < 300):
+      takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+      time.sleep(2)
+      tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+
+    time.sleep(5)
+
+    takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+
+    brightness = 1.0
+
+    while(brightness > 0):
+      blinkt.BRIGHTNESS = brightness
+      blinkt.show()
+      time.sleep(0.1)
+      brightness = brightness - 0.1
+
+    blinkt.clear()
+    blinkt.show()
+
+    doorRunning = False
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -118,7 +124,7 @@ def index():
   
   return redirect(url_for('index'))
 
-GPIO.add_event_detect(2, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=300)
+GPIO.add_event_detect(2, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=10000)
 
 if __name__ == '__main__':
   app.run(port=5000)
