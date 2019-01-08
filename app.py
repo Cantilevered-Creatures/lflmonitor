@@ -111,7 +111,7 @@ def doorRoutine(door: Door):
     brightness = 1.0
 
     while(brightness > 0):
-      blinkt.BRIGHTNESS = brightness
+      blinkt.set_brightness(brightness)
       blinkt.show()
       time.sleep(0.1)
       brightness = brightness - 0.1
