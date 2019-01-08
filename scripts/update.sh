@@ -5,4 +5,5 @@ curCommit=$(curl --silent https://api.github.com/repos/HoveringHalibut/fllmonito
 if [ "$curCommit" != "$([ -f ./lastCommit ] && cat ./lastCommit)" ]; then
   git pull -q
   echo $curCommit > lastCommit
+  sudo systemctl restart uwsgi.service
 fi
