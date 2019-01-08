@@ -7,6 +7,7 @@ import colorsys
 import time
 import datetime
 import math
+import threading
 
 import RPi.GPIO as GPIO
 import picamera
@@ -20,7 +21,21 @@ GPIO.setwarnings(False)
 
 doorSwitch=2
 doorSwitchSTS = GPIO.LOW
-doorRunning = False
+
+class Door(object):
+  def __init__(self):
+    self.lock = threading.Lock()
+    self.isRunning = False
+  def start(self):
+      self.lock.acquire()
+      self.isRunning = True
+      self.lock.release()
+  def stop(self):
+      self.lock.acquire()
+      self.isRunning = False
+      self.lock.release()
+
+door = Door()
 
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -70,8 +85,11 @@ def images(filepath):
     return send_from_directory('images', filepath)
 
 def doorSwitch_callback(channel):
-  if doorRunning == False:
-    doorRunning = True
+  doorRoutine(door)
+
+def doorRoutine(door: Door):
+  if door.isRunning == False:
+    door.start()
 
     rainbow(5, False)
     blinkt.set_all(255, 255, 255, 1.0)
@@ -101,7 +119,7 @@ def doorSwitch_callback(channel):
     blinkt.clear()
     blinkt.show()
 
-    doorRunning = False
+    door.stop()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
