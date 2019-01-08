@@ -25,7 +25,7 @@ GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 app = Flask(__name__)
 
-def rainbow(runSeconds: int = 5):
+def rainbow(runSeconds: int = 5, clear: bool = True):
   spacing = 360.0 / 16.0
   hue = 0
 
@@ -49,11 +49,12 @@ def rainbow(runSeconds: int = 5):
     #print(math.ceil(tSeconds/runSeconds*10)/10)
 
     blinkt.show()
-    time.sleep(0.001)
+    time.sleep(0.01)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-
-  blinkt.clear()
-  blinkt.show()
+  
+  if clear:
+    blinkt.clear()
+    blinkt.show()
 
 def takepicture(imageName: str):
   with picamera.PiCamera() as camera:
@@ -68,7 +69,32 @@ def images(filepath):
     return send_from_directory('images', filepath)
 
 def doorSwitch_callback(channel):
-  executor.submit(rainbow)
+  rainbow(5, False)
+  blinkt.set_all(255, 255, 255, 1.0)
+  blinkt.show()
+
+  start_time = datetime.datetime.now()
+
+  tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+
+  while(GPIO.input(doorSwitch) & tSeconds < 300):
+    takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+    time.sleep(2)
+
+  time.sleep(5)
+
+  takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+
+  brightness = 1.0
+
+  while(brightness > 0):
+    blinkt.BRIGHTNESS = brightness
+    blinkt.show()
+    time.sleep(0.1)
+    brightness = brightness - 0.1
+
+  blinkt.clear()
+  blinkt.show()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
