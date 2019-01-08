@@ -82,7 +82,7 @@ def index():
   if request.form['submit'] == 'Rainbow':
     executor.submit(rainbow, int(request.form['secRainbow']))
   elif request.form['submit'] == 'Take Picture':
-    takepicture('./images/test.jpg')
+    takepicture('images/test')
   
   return redirect(url_for('index'))
 
