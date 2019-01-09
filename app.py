@@ -14,6 +14,10 @@ import picamera
 
 import blinkt
 
+# Clear blinkt in case it was left on after a unexpected shutdown or crash
+blinkt.clear()
+blinkt.show()
+
 bgThread = None
 
 GPIO.setmode(GPIO.BCM)
