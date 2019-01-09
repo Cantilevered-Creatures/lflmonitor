@@ -104,7 +104,7 @@ def doorRoutine(door: Door):
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
-    time.sleep(5)
+    time.sleep(2)
 
     takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
