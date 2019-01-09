@@ -44,7 +44,7 @@ class Door(object):
       self.lock.release()
       return False
     else:
-      self.isRunning = True
+      self._isRunning = True
       self.lock.release()
       return True  
 
@@ -150,7 +150,7 @@ def index():
   
   return redirect(url_for('index'))
 
-GPIO.add_event_detect(2, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=10000)
+GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=10000)
 
 if __name__ == '__main__':
   app.run(port=5000)
