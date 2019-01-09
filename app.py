@@ -29,7 +29,7 @@ doorSwitchSTS = GPIO.LOW
 class Door(object):
   def __init__(self):
     self.lock = threading.Lock()
-    self.isRunning = False
+    self._isRunning = False
   def start(self):
       self.lock.acquire()
       self.isRunning = True
@@ -38,6 +38,15 @@ class Door(object):
       self.lock.acquire()
       self.isRunning = False
       self.lock.release()
+  def canIRun(self):
+    self.lock.acquire()
+    if (self._isRunning):
+      self.lock.release()
+      return False
+    else:
+      self.isRunning = True
+      self.lock.release()
+      return True  
 
 door = Door()
 
@@ -80,20 +89,15 @@ def takepicture(imageName: str):
   with picamera.PiCamera() as camera:
     camera.resolution = (1920, 1080)
     time.sleep(1) # Camera warm-up time
-    filename = '%s.jpg' % imageName
+    filename = 'images/%s.jpg' % imageName
     print(filename)
     camera.capture(filename)
-
-@app.route('/images/<path:filepath>')
-def images(filepath):
-    return send_from_directory('images', filepath)
 
 def doorSwitch_callback(channel):
   doorRoutine(door)
 
 def doorRoutine(door: Door):
-  if door.isRunning == False:
-    door.start()
+  if door.canIRun():
 
     rainbow(5, False)
     blinkt.set_all(255, 255, 255, 1.0)
