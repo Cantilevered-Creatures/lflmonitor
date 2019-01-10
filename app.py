@@ -10,7 +10,7 @@ import math
 import threading
 
 import RPi.GPIO as GPIO
-import picamera
+#import picamera
 
 import blinkt
 
@@ -96,7 +96,8 @@ def takepicture(imageName: str):
 
 def doorSwitch_callback(channel):
   print("Callback")
-  doorRoutine(door)
+  t = threading.Thread(target=doorRoutine, args=(door,))
+  t.start()
 
 def doorRoutine(door: Door):
   print("knocking")
@@ -111,13 +112,13 @@ def doorRoutine(door: Door):
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
     while(GPIO.input(doorSwitch) == 0 and tSeconds < 300):
-      takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+      #takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
     time.sleep(2)
 
-    takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+    #takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
     brightness = 1.0
 
@@ -153,7 +154,7 @@ def index():
   
   return redirect(url_for('index'))
 
-GPIO.add_event_detect(doorSwitch, GPIO.RISING, callback=doorSwitch_callback, bouncetime=1000)
+GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
 
 if __name__ == '__main__':
   app.run(port=5000)
