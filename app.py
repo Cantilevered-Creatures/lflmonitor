@@ -10,7 +10,7 @@ import math
 import threading
 
 import RPi.GPIO as GPIO
-#import picamera
+import picamera
 
 import blinkt
 
@@ -77,7 +77,6 @@ def rainbow(runSeconds: int = 5, clear: bool = True):
 
     # Increment brightness over the run
     blinkt.set_brightness(math.ceil(tSeconds/runSeconds*10)/10)
-    #print(math.ceil(tSeconds/runSeconds*10)/10)
 
     blinkt.show()
     time.sleep(0.01)
@@ -112,13 +111,13 @@ def doorRoutine(door: Door):
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
     while(GPIO.input(doorSwitch) == 0 and tSeconds < 300):
-      #takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+      takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
     time.sleep(2)
 
-    #takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
+    takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
     brightness = 1.0
 
