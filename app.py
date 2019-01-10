@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for
 
 from concurrent.futures import ThreadPoolExecutor, Future
 executor = ThreadPoolExecutor(1)
@@ -32,11 +32,11 @@ class Door(object):
     self._isRunning = False
   def start(self):
       self.lock.acquire()
-      self.isRunning = True
+      self._isRunning = True
       self.lock.release()
   def stop(self):
       self.lock.acquire()
-      self.isRunning = False
+      self._isRunning = False
       self.lock.release()
   def canIRun(self):
     self.lock.acquire()
@@ -90,7 +90,6 @@ def takepicture(imageName: str):
     camera.resolution = (1920, 1080)
     time.sleep(1) # Camera warm-up time
     filename = 'images/%s.jpg' % imageName
-    print(filename)
     camera.capture(filename)
 
 def doorSwitch_callback(channel):
@@ -106,7 +105,7 @@ def doorRoutine(door: Door):
     start_time = datetime.datetime.now()
 
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-    print(GPIO.input(doorSwitch))
+
     while(GPIO.input(doorSwitch) == 0 and tSeconds < 300):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
@@ -150,7 +149,7 @@ def index():
   
   return redirect(url_for('index'))
 
-GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=10000)
+GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
 
 if __name__ == '__main__':
   app.run(port=5000)
