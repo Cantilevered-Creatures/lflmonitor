@@ -39,7 +39,9 @@ class Door(object):
       self._isRunning = False
       self.lock.release()
   def canIRun(self):
+    print("beforeLock")
     self.lock.acquire()
+    print(self._isRunning)
     if (self._isRunning):
       self.lock.release()
       return False
@@ -93,9 +95,11 @@ def takepicture(imageName: str):
     camera.capture(filename)
 
 def doorSwitch_callback(channel):
+  print("Callback")
   doorRoutine(door)
 
 def doorRoutine(door: Door):
+  print("knocking")
   if door.canIRun():
 
     rainbow(5, False)
