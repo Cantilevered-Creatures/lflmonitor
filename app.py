@@ -153,7 +153,7 @@ def index():
   
   return redirect(url_for('index'))
 
-GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
+GPIO.add_event_detect(doorSwitch, GPIO.RISING, callback=doorSwitch_callback, bouncetime=1000)
 
 if __name__ == '__main__':
   app.run(port=5000)
