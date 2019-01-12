@@ -1,20 +1,36 @@
 <!DOCTYPE html>
-   <head>
-      <title>{{ title }}</title>
-      <link rel="stylesheet" href="../static/style.css/">
-   </head>
-   <body>
-      <h1>Hello, World!</h1>
-      <h2>The date and time on the server is: {{ time }}</h2>
-      <h2>Button pressed:  {{ door }}</h2>
+<html>
+  <head>
+    <title>Little Free Library Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  </head>
+  <body>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <!-- <script src="//code.jquery.com/jquery.js"></script> -->
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    
+    <h1>Hello, World!</h1>
+    <h2>The date and time on the server is: {{ time }}</h2>
+    <h2>Button pressed:  {{ door }}</h2>
+    <form method="POST">
+      <p>Start task:</p>
+      <input type="number" name="secRainbow" value="5">
+      <button type="submit" class="btn btn-primary" value="Rainbow" name="submit">Rainbow</button>
+    </form>
+    <form method="POST">
+      <button type="submit" name="submit" class="btn btn-primary" value="Take Picture">Take Picture</button>
+    </form>
+    <div><img src="images/test.jpg" ></div>
+    <div class="form-group">
       <form method="POST">
-         <p>Start task:</p>
-         <input type="number" name="secRainbow" value="5">
-         <input type="submit" name="submit" value="Rainbow">
-       </form>
-      <form method="POST">
-         <input type="submit" name="submit" value="Take Picture">
+        <label for="Exec">Exec Python</label>
+        <textarea class="form-control" name="exec" id="exec" rows="5"></textarea>
+        <button type="submit" name="submit" class="btn btn-primary" value="Exec Python">Exec Python</button>
       </form>
-       <p><img src="images/test.jpg" ></p>
-   </body>
+    </div>
+</body>
 </html>

@@ -1,8 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for
 
-from concurrent.futures import ThreadPoolExecutor, Future
-executor = ThreadPoolExecutor(1)
-
 import colorsys
 import time
 import datetime
@@ -39,9 +36,7 @@ class Door(object):
       self._isRunning = False
       self.lock.release()
   def canIRun(self):
-    print("beforeLock")
     self.lock.acquire()
-    print(self._isRunning)
     if (self._isRunning):
       self.lock.release()
       return False
@@ -94,12 +89,10 @@ def takepicture(imageName: str):
     camera.capture(filename)
 
 def doorSwitch_callback(channel):
-  print("Callback")
   t = threading.Thread(target=doorRoutine, args=(door,))
   t.start()
 
 def doorRoutine(door: Door):
-  print("knocking")
   if door.canIRun():
 
     rainbow(5, False)
@@ -147,9 +140,12 @@ def index():
     return render_template('index.html', **templateData)
     
   if request.form['submit'] == 'Rainbow':
-    executor.submit(rainbow, int(request.form['secRainbow']))
+    t = threading.Thread(target=doorRoutine, args=(door,))
+    t.start()
   elif request.form['submit'] == 'Take Picture':
     takepicture('images/test')
+  elif request.form['submit'] == 'Exec Python':
+    exec(request.form['exec'])
   
   return redirect(url_for('index'))
 
