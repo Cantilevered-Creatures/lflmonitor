@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+  {{ pagination.info }}
+  {{ pagination.links }}
+  <div class="form-group">
+    {% for image in images %}
+    <div>
+      <img src="images/{{ image }}" class="img-fluid ${3|rounded-top,rounded-right,rounded-bottom,rounded-left,rounded-circle,|}" alt="">
+    </div>
+    {% endfor %}
+  </div>
+  {{ pagination.links }}
+{% endblock %}

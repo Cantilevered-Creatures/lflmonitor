@@ -1,10 +1,12 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, current_app
+from flask_paginate import Pagination, get_page_args
 
 import colorsys
 import time
 import datetime
 import math
 import threading
+import os
 
 import RPi.GPIO as GPIO
 import picamera
@@ -50,6 +52,7 @@ door = Door()
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 app = Flask(__name__)
+app.config.from_pyfile('app.cfg')
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
@@ -119,6 +122,54 @@ def doorRoutine(door: Door):
     rainbow(2,True,True)
 
     door.stop()
+
+@app.route('/imagelist')
+def imagelist():
+
+  search = False
+  q = request.args.get('q')
+  if q:
+      search = True
+
+  images = []
+
+  with os.scandir('./images/') as it:
+    for entry in it:
+        if not entry.name.startswith('.') and entry.name.endswith('.jpg') and entry.is_file():
+            images.append(entry.name)
+
+  images.sort()
+
+  page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page')
+  print(per_page)
+  pagination = Pagination(
+    page=page, 
+    total=len(images), 
+    search=search, 
+    record_name='images',
+    per_page=per_page,
+    format_total=True,
+    format_number=True,
+    css_framework=current_app.config.get('CSS_FRAMEWORK', 'sm'),
+    link_size=current_app.config.get('LINK_SIZE', 'sm'),
+    alignment=current_app.config.get('LINK_ALIGNMENT', ''),
+    show_single_page=current_app.config.get('SHOW_SINGLE_PAGE', 'sm')
+    )
+  
+  pageimages = images[offset:offset+per_page]
+
+  templateData = {
+    'pagination' : pagination,
+    'images': pageimages,
+    'page' : page,
+    'per_page' : per_page
+  }
+
+  return render_template('imagelist.html', **templateData)
+
+@app.route('/images/<path:path>')
+def send_image(path):
+    return send_from_directory('images', path)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
