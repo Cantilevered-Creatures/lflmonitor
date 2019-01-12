@@ -1,14 +1,22 @@
 {% extends "base.html" %}
 
 {% block page_content %}
-  {{ pagination.info }}
-  {{ pagination.links }}
-  <div class="form-group">
-    {% for image in images %}
+  <div class="container">
+    {{ pagination.info }}
+    {{ pagination.links }}
+    {% for imagegroup in images %}
     <div>
       <img src="images/{{ image }}" class="img-fluid ${3|rounded-top,rounded-right,rounded-bottom,rounded-left,rounded-circle,|}" alt="">
     </div>
+    <div class="row">
+      {% for image in imagegroup %}
+      <div class="col-md-4">
+        <p>{{ image }}</p>
+        <p><img src="images/{{ image }}" class="img-fluid ${3|rounded-top,rounded-right,rounded-bottom,rounded-left,rounded-circle,|}" alt=""></p>
+      </div>
+      {% endfor %}
+    </div>
     {% endfor %}
+    {{ pagination.links }}
   </div>
-  {{ pagination.links }}
 {% endblock %}

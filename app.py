@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, send_from_directory, current_app
 from flask_paginate import Pagination, get_page_args
 
+from itertools import zip_longest
+
 import colorsys
 import time
 import datetime
@@ -9,7 +11,7 @@ import threading
 import os
 
 import RPi.GPIO as GPIO
-import picamera
+#import picamera
 
 import blinkt
 
@@ -53,6 +55,10 @@ GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 app = Flask(__name__)
 app.config.from_pyfile('app.cfg')
+
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
@@ -156,7 +162,7 @@ def imagelist():
     show_single_page=current_app.config.get('SHOW_SINGLE_PAGE', 'sm')
     )
   
-  pageimages = images[offset:offset+per_page]
+  pageimages = grouper(images[offset:offset+per_page], 3)
 
   templateData = {
     'pagination' : pagination,
