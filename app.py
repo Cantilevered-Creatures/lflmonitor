@@ -51,12 +51,11 @@ GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 app = Flask(__name__)
 
-def rainbow(runSeconds: int = 5, clear: bool = True):
+def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
   hue = 0
 
   blinkt.set_clear_on_exit()
-  blinkt.set_brightness(1.0)
 
   start_time = datetime.datetime.now()
 
@@ -64,14 +63,19 @@ def rainbow(runSeconds: int = 5, clear: bool = True):
 
   while (tSeconds < runSeconds) :
     hue = int(time.time() * 100) % 360
+
     for x in range(blinkt.NUM_PIXELS):
       offset = x * spacing
       h = ((hue + offset) % 360) / 360.0
       r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
       blinkt.set_pixel(x, r, g, b)
 
-    # Increment brightness over the run
-    blinkt.set_brightness(math.ceil(tSeconds/runSeconds*10)/10)
+    if(decreaseBrightness):
+      fadeDirection = 1
+    else:
+      fadeDirection = 0
+    
+    blinkt.set_brightness(math.ceil((fadeDirection-tSeconds/runSeconds)*10)/10)
 
     blinkt.show()
     time.sleep(0.01)
@@ -112,16 +116,7 @@ def doorRoutine(door: Door):
 
     takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
-    brightness = 1.0
-
-    while(brightness > 0):
-      blinkt.set_brightness(brightness)
-      blinkt.show()
-      time.sleep(0.1)
-      brightness = brightness - 0.1
-
-    blinkt.clear()
-    blinkt.show()
+    rainbow(2,True,True)
 
     door.stop()
 
