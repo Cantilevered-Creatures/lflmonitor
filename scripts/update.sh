@@ -1,10 +1,4 @@
 #!/bin/bash
 
-curCommit=$(curl --silent https://api.github.com/repos/HoveringHalibut/lflmonitor/git/refs/heads/master | jq -r '.object.sha')
-
-if [ "$curCommit" != "$([ -f ./lastCommit ] && cat ./lastCommit)" ]; then
-  git pull -q
-  echo $curCommit > lastCommit
-  sudo pip3 install -r ../requirements.txt
-  sudo systemctl restart uwsgi.service
-fi
+sudo pip3 install -r ../requirements.txt
+sudo systemctl restart uwsgi.service
