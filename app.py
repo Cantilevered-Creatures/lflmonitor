@@ -70,12 +70,12 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
       r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
       blinkt.set_pixel(x, r, g, b)
 
+    brightness = math.ceil((tSeconds/runSeconds)*10)/10
+
     if(decreaseBrightness):
-      fadeDirection = 1
-    else:
-      fadeDirection = 0
+      brightness = 1 - brightness
     
-    blinkt.set_brightness(math.ceil((fadeDirection-tSeconds/runSeconds)*10)/10)
+    blinkt.set_brightness(brightness)
 
     blinkt.show()
     time.sleep(0.01)
