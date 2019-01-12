@@ -133,10 +133,10 @@ def imagelist():
 
   images = []
 
-  with os.scandir('./images/') as it:
-    for entry in it:
-        if not entry.name.startswith('.') and entry.name.endswith('.jpg') and entry.is_file():
-            images.append(entry.name)
+  it = os.scandir('./images/')
+  for entry in it:
+      if not entry.name.startswith('.') and entry.name.endswith('.jpg') and entry.is_file():
+          images.append(entry.name)
 
   images.sort()
 
