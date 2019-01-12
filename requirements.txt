@@ -1,0 +1,5 @@
+flask
+flask-paginate
+RPi.GPIO
+blinkt
+picamera
