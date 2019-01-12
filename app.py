@@ -127,27 +127,27 @@ def doorRoutine(door: Door):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+
+  doorSwitchSTS = GPIO.input(doorSwitch)
+  now = datetime.datetime.now()
+  timeString = now.strftime("%Y-%m-%d %H:%M")
+  templateData = {
+    'title' : 'HELLO!',
+    'time': timeString,
+    'door': doorSwitchSTS
+  }
   
-  if request.method == 'GET':
-    doorSwitchSTS = GPIO.input(doorSwitch)
-    now = datetime.datetime.now()
-    timeString = now.strftime("%Y-%m-%d %H:%M")
-    templateData = {
-      'title' : 'HELLO!',
-      'time': timeString,
-      'door': doorSwitchSTS
-    }
-    return render_template('index.html', **templateData)
-    
-  if request.form['submit'] == 'Rainbow':
-    t = threading.Thread(target=doorRoutine, args=(door,))
-    t.start()
-  elif request.form['submit'] == 'Take Picture':
-    takepicture('images/test')
-  elif request.form['submit'] == 'Exec Python':
-    exec(request.form['exec'])
+  if request.method == 'POST':
+    if request.form['submit'] == 'Rainbow':
+      t = threading.Thread(target=doorRoutine, args=(door,))
+      t.start()
+    elif request.form['submit'] == 'Take Picture':
+      takepicture('images/test')
+    elif request.form['submit'] == 'Exec Python':
+      templateData['execcmd'] = request.form['exec']
+      templateData['execoutput'] = exec(templateData['execcmd'])
   
-  return redirect(url_for('index'))
+  return render_template('index.html', **templateData)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
 
