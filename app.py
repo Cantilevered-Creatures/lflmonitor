@@ -166,7 +166,7 @@ def imagelist():
     )
   
   pageimages = grouper(images[offset:offset+per_page], 3)
-
+  
   templateData = {
     'pagination' : pagination,
     'images': pageimages,
