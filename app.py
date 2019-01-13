@@ -11,9 +11,15 @@ import threading
 import os
 
 import RPi.GPIO as GPIO
-#import picamera
 
 import blinkt
+
+app = Flask(__name__)
+app.config.from_pyfile('app.cfg')
+
+# picamera can only import on a pi
+if(app.config['ENV']!='development'):
+  import picamera
 
 # Clear blinkt in case it was left on after a unexpected shutdown or crash
 blinkt.clear()
@@ -52,9 +58,6 @@ class Door(object):
 door = Door()
 
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-app = Flask(__name__)
-app.config.from_pyfile('app.cfg')
 
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
