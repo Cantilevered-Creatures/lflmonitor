@@ -1,5 +1,8 @@
 flask
 flask-paginate
+flask-security
+sqlalchemy
 RPi.GPIO
 blinkt
 picamera
+bcrypt

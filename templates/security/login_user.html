@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+{% block page_content %}
+{% include "security/_messages.html" %}
+<div class="container">
+  <h1>{{ _('Login') }}</h1>
+  <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
+    {{ login_user_form.hidden_tag() }}
+    <div class="form-group row">
+      <label for="inputEmail3" class="col-sm-2 col-form-label">Email</label>
+      <div class="col-sm-10">
+        <input type="email" class="form-control" id="email" name="email" required="" placeholder="Email">
+      </div>
+    </div>
+    <div class="form-group row">
+      <label for="password" class="col-sm-2 col-form-label">Password</label>
+      <div class="col-sm-10">
+        <input type="password" name="password" id="password" class="form-control" required="" placeholder="password">
+      </div>
+    </div>
+    <div class="form-group row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-10">
+        <div class="custom-control custom-switch">
+          <input type="checkbox" class="custom-control-input" name="remember" id="remember" value="checkedValue" checked>
+          <label class="custom-control-label" for="remember">Remember Me</label>
+        </div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <input name="name" id="submit" class="btn btn-dark" type="submit" value="Login">
+    </div>
+  </form>
+</div>
+{% include "security/_menu.html" %}
+{% endblock %}

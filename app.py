@@ -1,5 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, send_from_directory, current_app
 from flask_paginate import Pagination, get_page_args
+from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, logout_user
+from database import dbconfig
+from models import User, Role
 
 from itertools import zip_longest
 
@@ -15,11 +18,26 @@ import RPi.GPIO as GPIO
 import blinkt
 
 app = Flask(__name__)
-app.config.from_pyfile('app.cfg')
+
+try:
+  app.config.from_pyfile('/etc/lflmonitor/app.cfg')
+except FileNotFoundError:
+  if(app.config['ENV']!='development'):
+    app.config.from_pyfile('app.cfg')
+  else:
+    app.config.from_pyfile('app.cfg.example')
+
+app.secret_key = app.config['SECRET_KEY']
 
 # picamera can only import on a pi
 if(app.config['ENV']!='development'):
   import picamera
+  db = dbconfig('/tmp/test.db')
+else:
+  db = dbconfig(app.config['DB_PATH'])
+
+user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
+security = Security(app, user_datastore)
 
 # Clear blinkt in case it was left on after a unexpected shutdown or crash
 blinkt.clear()
@@ -58,6 +76,19 @@ class Door(object):
 door = Door()
 
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+@app.before_first_request
+def create_user():
+    #init_db()
+    admin_role = [user_datastore.find_role('Admin')]
+    if(len(admin_role)==0):
+      user_datastore.create_role(name='Admin', description='Admin group')
+      db.db_session.commit()
+      admin_role = [user_datastore.find_role('Admin')]
+    
+    if(not user_datastore.find_user(email=app.config['ADMIN_USER'])):
+      user_datastore.create_user(email=app.config['ADMIN_USER'], password=app.config['ADMIN_PASS'], roles=admin_role)
+      db.db_session.commit()
 
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
@@ -132,7 +163,13 @@ def doorRoutine(door: Door):
 
     door.stop()
 
+@app.route('/logout')
+def logout():
+  logout_user()
+  return redirect(url_for('index'))
+
 @app.route('/imagelist')
+@login_required
 def imagelist():
 
   search = False
@@ -177,10 +214,12 @@ def imagelist():
   return render_template('imagelist.html', **templateData)
 
 @app.route('/images/<path:path>')
+@login_required
 def send_image(path):
     return send_from_directory('images', path)
 
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
 
   doorSwitchSTS = GPIO.input(doorSwitch)
