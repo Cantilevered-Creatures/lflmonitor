@@ -81,11 +81,11 @@ GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 def create_user():
     #init_db()
     admin_role = [user_datastore.find_role('Admin')]
-    if(len(admin_role)==0):
+    if(admin_role[0]==None):
       user_datastore.create_role(name='Admin', description='Admin group')
       db.db_session.commit()
       admin_role = [user_datastore.find_role('Admin')]
-    
+
     if(not user_datastore.find_user(email=app.config['ADMIN_USER'])):
       user_datastore.create_user(email=app.config['ADMIN_USER'], password=app.config['ADMIN_PASS'], roles=admin_role)
       db.db_session.commit()
