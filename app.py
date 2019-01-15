@@ -32,9 +32,10 @@ app.secret_key = app.config['SECRET_KEY']
 # picamera can only import on a pi
 if(app.config['ENV']!='development'):
   import picamera
-  db = dbconfig('/tmp/test.db')
-else:
   db = dbconfig(app.config['DB_PATH'])
+else:
+  db = dbconfig('/tmp/test.db')
+  
 
 user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
 security = Security(app, user_datastore)
