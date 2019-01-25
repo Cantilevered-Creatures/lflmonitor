@@ -244,7 +244,7 @@ def index():
     'title' : 'HELLO!',
     'time': timeString,
     'door': doorSwitchSTS,
-    'batteryVoltage': chanBattery.voltage * 5
+    'batteryVoltage': round(chanBattery.voltage * 5, 2)
   }
   
   if request.method == 'POST':
