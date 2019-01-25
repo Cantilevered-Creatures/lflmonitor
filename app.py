@@ -24,6 +24,14 @@ import blinkt
 
 app = Flask(__name__)
 
+try:
+  app.config.from_pyfile('/etc/lflmonitor/app.cfg')
+except FileNotFoundError:
+  if(app.config['ENV']!='development'):
+    app.config.from_pyfile('app.cfg')
+  else:
+    app.config.from_pyfile('app.cfg.example')
+
 # Create the I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)
 
@@ -32,14 +40,6 @@ ads = ADS.ADS1115(i2c)
 
 # Create single-ended input on channel 0
 chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
-
-try:
-  app.config.from_pyfile('/etc/lflmonitor/app.cfg')
-except FileNotFoundError:
-  if(app.config['ENV']!='development'):
-    app.config.from_pyfile('app.cfg')
-  else:
-    app.config.from_pyfile('app.cfg.example')
 
 app.secret_key = app.config['SECRET_KEY']
 
