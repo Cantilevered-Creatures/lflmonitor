@@ -21,7 +21,7 @@ class dbconfig():
     db_session = scoped_session(sessionmaker(autocommit=False,
                                           autoflush=False,
                                           bind=engine))
-    
+
     self.db_session = db_session
     
     Base.query = db_session.query_property()

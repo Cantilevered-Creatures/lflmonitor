@@ -6,3 +6,4 @@ RPi.GPIO
 blinkt
 picamera
 bcrypt
+adafruit-circuitpython-ads1x15

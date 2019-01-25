@@ -15,9 +15,24 @@ import os
 
 import RPi.GPIO as GPIO
 
+import busio
+import adafruit_ads1x15.ads1015 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+
 import blinkt
 
 app = Flask(__name__)
+
+# Create the I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# Create the ADC object using the I2C bus
+ads = ADS.ADS1115(i2c)
+
+# Create single-ended input on channel 0
+chan = AnalogIn(ads, ADS.P0)
+
+print("{:>5}\t{:>5}".format('raw', 'v'))
 
 try:
   app.config.from_pyfile('/etc/lflmonitor/app.cfg')
@@ -49,7 +64,7 @@ bgThread = None
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-doorSwitch=2
+doorSwitch=app.config['DOOR_SWITCH']
 doorSwitchSTS = GPIO.LOW
 
 class Door(object):
@@ -72,7 +87,7 @@ class Door(object):
     else:
       self._isRunning = True
       self.lock.release()
-      return True  
+      return True
 
 door = Door()
 
@@ -190,9 +205,9 @@ def imagelist():
   page, per_page, offset = get_page_args(page_parameter='page', per_page_parameter='per_page')
   print(per_page)
   pagination = Pagination(
-    page=page, 
-    total=len(images), 
-    search=search, 
+    page=page,
+    total=len(images),
+    search=search,
     record_name='images',
     per_page=per_page,
     format_total=True,
@@ -241,7 +256,7 @@ def index():
     elif request.form['submit'] == 'Exec Python':
       templateData['execcmd'] = request.form['exec']
       templateData['execoutput'] = exec(templateData['execcmd'])
-  
+
   return render_template('index.html', **templateData)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)

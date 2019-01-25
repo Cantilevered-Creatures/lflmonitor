@@ -13,3 +13,6 @@ ADMIN_USER = 'test@test.com'
 ADMIN_PASS = 'test'
 
 DB_PATH = 'auth.db'
+
+# GPIO Pin for the door switch
+DOOR_SWITCH = 20
