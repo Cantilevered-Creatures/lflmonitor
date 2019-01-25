@@ -34,6 +34,7 @@ ads = ADS.ADS1115(i2c)
 chan = AnalogIn(ads, ADS.P0)
 
 print("{:>5}\t{:>5}".format('raw', 'v'))
+print("{:>5}\t{:>5.3f}".format(chan.value, chan.voltage))
 
 try:
   app.config.from_pyfile('/etc/lflmonitor/app.cfg')
