@@ -31,10 +31,7 @@ i2c = busio.I2C(board.SCL, board.SDA)
 ads = ADS.ADS1115(i2c)
 
 # Create single-ended input on channel 0
-chan = AnalogIn(ads, ADS.P0)
-
-print("{:>5}\t{:>5}".format('raw', 'v'))
-print("{:>5}\t{:>5.3f}".format(chan.value, chan.voltage))
+chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
 
 try:
   app.config.from_pyfile('/etc/lflmonitor/app.cfg')
@@ -246,7 +243,8 @@ def index():
   templateData = {
     'title' : 'HELLO!',
     'time': timeString,
-    'door': doorSwitchSTS
+    'door': doorSwitchSTS,
+    'batteryVoltage': chanBattery.voltage * 5
   }
   
   if request.method == 'POST':
