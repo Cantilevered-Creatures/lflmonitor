@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-rrdtool create $1 \
+if [ -f /etc/lflmonitor/app.cfg ]; then
+  source '/etc/lflmonitor/app.cfg'
+else
+  source './app.cfg.example'
+fi
+
+rrdtool create $RRD_PATH \
    --start now-2h --step 1s \
    DS:vbattery:GAUGE:5m:0:24000 \
    DS:vpanel:GAUGE:5m:0:24000 \

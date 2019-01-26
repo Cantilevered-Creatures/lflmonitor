@@ -1,28 +1,29 @@
 ## Pagination settings ##
-PER_PAGE = 6
-CSS_FRAMEWORK = 'bootstrap4'
-LINK_SIZE = 'sm'
+PER_PAGE=6
+CSS_FRAMEWORK='bootstrap4'
+LINK_SIZE='sm'
 
 # decide whether or not a single page returns pagination
-SHOW_SINGLE_PAGE = True
+SHOW_SINGLE_PAGE=True
 
-SECRET_KEY = 'ChangeMe'
-SECURITY_PASSWORD_SALT = 'Salty'
+SECRET_KEY='ChangeMe'
+SECURITY_PASSWORD_SALT='Salty'
 
-ADMIN_USER = 'test@test.com'
-ADMIN_PASS = 'test'
+ADMIN_USER='test@test.com'
+ADMIN_PASS='test'
 
-DB_PATH = 'auth.db'
+DB_PATH='auth.db'
 
 # GPIO Pin for the door switch
-DOOR_SWITCH = 20
+DOOR_SWITCH=20
 
 # ADS pins for voltage monitoring
-PANEL_PIN = -1
-BATTERY_PIN = -1
+PANEL_PIN=-1
+BATTERY_PIN=-1
 
 # RRD db path for voltage monitoring
-RRD_PATH = '/tmp/power.rrd'
+RRD_PATH='power.rrd'
+XML_PATH='./xml'
 
 # RRD Interval to capture voltage stats
-RRD_INTERVAL = 60
+RRD_INTERVAL=60

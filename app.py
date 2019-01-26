@@ -250,6 +250,11 @@ def imagelist():
 def send_image(path):
     return send_from_directory('images', path)
 
+@app.route('/xml/<path:path>')
+@login_required
+def send_image(path):
+    return send_from_directory(app.config['XML_PATH'], path)
+
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
