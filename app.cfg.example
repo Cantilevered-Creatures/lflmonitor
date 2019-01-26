@@ -17,4 +17,9 @@ DB_PATH = 'auth.db'
 # GPIO Pin for the door switch
 DOOR_SWITCH = 20
 
-BATTERY_PIN = 1
+# ADS pins for voltage monitoring
+PANEL_PIN = -1
+BATTERY_PIN = -1
+
+# RRD db path for voltage monitoring
+RRD_PATH = '/tmp/power.rrd'

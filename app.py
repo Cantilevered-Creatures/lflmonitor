@@ -12,6 +12,7 @@ import datetime
 import math
 import threading
 import os
+import rrdtool
 
 import RPi.GPIO as GPIO
 
@@ -108,6 +109,12 @@ def create_user():
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
     return zip_longest(*args, fillvalue=fillvalue)
+
+def voltageLogger():
+  while(True):
+    chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
+    rrdtool.update(app.config['RRD_PATH'], "N:%s" % chanBattery)
+    time.sleep(2)
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
@@ -260,6 +267,10 @@ def index():
   return render_template('index.html', **templateData)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
+
+if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
+  t = threading.Thread(target=voltageLogger)
+  t.start()
 
 if __name__ == '__main__':
   app.run(port=5000)
