@@ -114,16 +114,16 @@ def grouper(iterable, n, fillvalue=None):
 def voltageLogger():
   while(True):
     if(app.config['BATTERY_PIN'] > -1):
-      vbattery = round(chanBattery.voltage * 5, 3)
+      vBattery = round(chanBattery.voltage * 5, 3)
     else:
-      vbattery = 0
+      vBattery = 0
 
     if(app.config['PANEL_PIN'] > -1):
       vPanel = round(chanPanel.voltage * 5, 3)
     else:
       vPanel = 0
     
-    rrdtool.update(app.config['RRD_PATH'], "N:%f:%f".format(chanBattery, vPanel))
+    rrdtool.update(app.config['RRD_PATH'], f"N:{vBattery}:{vPanel}")
     time.sleep(2)
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
