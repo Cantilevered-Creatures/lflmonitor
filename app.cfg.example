@@ -23,3 +23,6 @@ BATTERY_PIN = -1
 
 # RRD db path for voltage monitoring
 RRD_PATH = '/tmp/power.rrd'
+
+# RRD Interval to capture voltage stats
+RRD_INTERVAL = 60

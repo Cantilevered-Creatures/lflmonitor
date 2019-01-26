@@ -124,7 +124,7 @@ def voltageLogger():
       vPanel = 0
     
     rrdtool.update(app.config['RRD_PATH'], "N:{}:{}".format(vBattery, vPanel))
-    time.sleep(2)
+    time.sleep(app.config['RRD_INTERVAL'])
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
