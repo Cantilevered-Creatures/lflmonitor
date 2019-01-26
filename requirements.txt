@@ -7,3 +7,4 @@ blinkt
 picamera
 bcrypt
 adafruit-circuitpython-ads1x15
+rrdtool

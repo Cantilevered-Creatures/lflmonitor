@@ -41,6 +41,7 @@ ads = ADS.ADS1115(i2c)
 
 # Create single-ended input on channel 0
 chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
+chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
 
 app.secret_key = app.config['SECRET_KEY']
 
@@ -112,8 +113,17 @@ def grouper(iterable, n, fillvalue=None):
 
 def voltageLogger():
   while(True):
-    chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
-    rrdtool.update(app.config['RRD_PATH'], "N:%s" % chanBattery)
+    if(app.config['BATTERY_PIN'] > -1):
+      vbattery = round(chanBattery.voltage * 5, 2)
+    else:
+      vbattery = 0
+
+    if(app.config['PANEL_PIN'] > -1):
+      vPanel = round(chanPanel.voltage * 5, 2)
+    else:
+      vPanel = 0
+    
+    rrdtool.update(app.config['RRD_PATH'], "N:%s:%s" % chanBattery, vPanel)
     time.sleep(2)
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
