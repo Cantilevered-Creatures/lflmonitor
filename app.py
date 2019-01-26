@@ -123,7 +123,7 @@ def voltageLogger():
     else:
       vPanel = 0
     
-    rrdtool.update(app.config['RRD_PATH'], "N:%s:%s" % chanBattery, vPanel)
+    rrdtool.update(app.config['RRD_PATH'], "N:%s:%s".format(chanBattery, vPanel))
     time.sleep(2)
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
