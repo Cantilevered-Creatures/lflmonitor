@@ -252,7 +252,7 @@ def send_image(path):
 
 @app.route('/xml/<path:path>')
 @login_required
-def send_image(path):
+def send_xml(path):
     return send_from_directory(app.config['XML_PATH'], path)
 
 @app.route('/', methods=['GET', 'POST'])
