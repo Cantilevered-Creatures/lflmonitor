@@ -13,6 +13,7 @@ import math
 import threading
 import os
 import rrdtool
+import urllib
 
 import RPi.GPIO as GPIO
 
@@ -202,7 +203,18 @@ def imagelist():
 @login_required
 def voltage():
 
-  return render_template('voltagegraph.html')
+  xmlFiles = []
+
+  it = os.scandir("{}/".format(app.config['XML_PATH']))
+  for entry in it:
+      if not entry.name.startswith('.') and entry.name.endswith('.xml') and entry.is_file():
+          xmlFiles.append(urllib.parse.quote(entry.path))
+
+  templateData = {
+    'xmlpaths' : xmlFiles
+  }
+
+  return render_template('voltagegraph.html', **templateData)
 
 @app.route('/images/<path:path>')
 @login_required

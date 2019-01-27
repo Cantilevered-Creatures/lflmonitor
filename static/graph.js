@@ -43,5 +43,9 @@ options = {
 
   lineWidth: 1,
 
-  series: []
+  series: [],
+
+  credits: {
+    enabled: false
+  }
 }
