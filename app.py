@@ -16,57 +16,9 @@ import rrdtool
 
 import RPi.GPIO as GPIO
 
-import board
-import busio
-import adafruit_ads1x15.ads1115 as ADS
-from adafruit_ads1x15.analog_in import AnalogIn
-
 import blinkt
 
 app = Flask(__name__)
-
-try:
-  app.config.from_pyfile('/etc/lflmonitor/app.cfg')
-except FileNotFoundError:
-  if(app.config['ENV']!='development'):
-    app.config.from_pyfile('app.cfg')
-  else:
-    app.config.from_pyfile('app.cfg.example')
-
-# Create the I2C bus
-i2c = busio.I2C(board.SCL, board.SDA)
-
-# Create the ADC object using the I2C bus
-ads = ADS.ADS1115(i2c)
-
-# Create single-ended input on channel 0
-chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
-chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
-
-app.secret_key = app.config['SECRET_KEY']
-
-# picamera can only import on a pi
-if(app.config['ENV']!='development'):
-  import picamera
-  db = dbconfig(app.config['DB_PATH'])
-else:
-  db = dbconfig('/tmp/test.db')
-  
-
-user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
-security = Security(app, user_datastore)
-
-# Clear blinkt in case it was left on after a unexpected shutdown or crash
-blinkt.clear()
-blinkt.show()
-
-bgThread = None
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-
-doorSwitch=app.config['DOOR_SWITCH']
-doorSwitchSTS = GPIO.LOW
 
 class Door(object):
   def __init__(self):
@@ -92,7 +44,8 @@ class Door(object):
 
 door = Door()
 
-GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+if __name__ == '__main__':
+  app.run(port=5000)
 
 @app.before_first_request
 def create_user():
@@ -245,6 +198,12 @@ def imagelist():
 
   return render_template('imagelist.html', **templateData)
 
+@app.route('/voltage')
+@login_required
+def voltage():
+
+  return render_template('voltagegraph.html')
+
 @app.route('/images/<path:path>')
 @login_required
 def send_image(path):
@@ -266,9 +225,13 @@ def index():
     'title' : 'HELLO!',
     'time': timeString,
     'door': doorSwitchSTS,
-    'batteryVoltage': round(chanBattery.voltage * 5, 2)
   }
   
+  try:
+    templateData['batteryVoltage'] = round(chanBattery.voltage * 5, 2)
+  except NameError:
+    print("Ignoring name error")
+
   if request.method == 'POST':
     if request.form['submit'] == 'Rainbow':
       t = threading.Thread(target=doorRoutine, args=(door,))
@@ -281,11 +244,54 @@ def index():
 
   return render_template('index.html', **templateData)
 
+# picamera can only import on a pi
+if(app.config['ENV']!='development'):
+  import picamera
+  import board
+  import busio
+  import adafruit_ads1x15.ads1115 as ADS
+  from adafruit_ads1x15.analog_in import AnalogIn
+  
+  try:
+    app.config.from_pyfile('/etc/lflmonitor/app.cfg')
+  except FileNotFoundError:
+    app.config.from_pyfile('app.cfg')
+
+  
+
+  # Create the I2C bus
+  i2c = busio.I2C(board.SCL, board.SDA)
+
+  # Create the ADC object using the I2C bus
+  ads = ADS.ADS1115(i2c)
+
+  # Create single-ended input on channel 0
+  chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
+  chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
+
+  if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
+    t = threading.Thread(target=voltageLogger)
+    t.start()
+else:
+  app.config.from_pyfile('app.cfg.example')
+
+db = dbconfig(app.config['DB_PATH'])
+  
+app.secret_key = app.config['SECRET_KEY']
+
+user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
+security = Security(app, user_datastore)
+
+# Clear blinkt in case it was left on after a unexpected shutdown or crash
+blinkt.clear()
+blinkt.show()
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+doorSwitch = app.config['DOOR_SWITCH']
+doorSwitchSTS = GPIO.LOW
+
+GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
-
-if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
-  t = threading.Thread(target=voltageLogger)
-  t.start()
-
-if __name__ == '__main__':
-  app.run(port=5000)

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<script src="https://code.highcharts.com/highcharts.src.js"></script>
+<script src="static/graph.js"></script>
+<script type=text/javascript>
+  $(document).ready(function () {
+    $.ajax({
+      type: "GET",
+      url: "xml/voltage24h.xml",
+      dataType: "xml",
+      success: function(xml) {
+        var series = []
+
+        //define series
+        $(xml).find("entry").each(function() {
+          var seriesOptions = {
+            name: $(this).text(),
+            data: []
+          };
+          options.series.push(seriesOptions);
+        });
+
+        //populate with data
+        $(xml).find("row").each(function() {
+          var t = parseInt($(this).find("t").text()) * 1000
+
+          $(this).find("v").each(function(index) {
+            var v = parseFloat($(this).text())
+            v = v || null
+            if (v != null) {
+              options.series[index].data.push([t, v])
+            };
+          });
+        });
+
+        options.title.text = "Voltages over the last 3h"
+        $.each(series, function(index) {
+          options.series.push(series[index]);
+        });
+        chart = new Highcharts.Chart( options);
+      }
+    })
+  })
+</script>
+<div class="container">
+  <div id="graph" style="width:100%; height:400px;"></div>  
+</div>"
+{% endblock %}
