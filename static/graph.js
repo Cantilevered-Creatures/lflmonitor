@@ -10,7 +10,7 @@ options = {
       type: 'spline'
   },
   title: {
-      text: 'Temperatures of the last 24h'
+      text: 'Voltages'
   },
   subtitle: {
       text: ''
@@ -29,7 +29,7 @@ options = {
   },
   tooltip: {
       formatter: function () {
-          return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%H:%M', this.x) + ': ' + this.y.toFixed(1) + 'V';
+          return '<b>' + this.series.name + '</b><br/>' + Highcharts.dateFormat('%H:%M', this.x) + ': ' + this.y.toFixed(3) + 'V';
       }
   },
 
