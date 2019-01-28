@@ -36,7 +36,8 @@
           });
         });
 
-        options.title.text = "Voltages over the last 3h"
+        // TODO: Dynamically update title
+        options.title.text = "Voltages over time"
         $.each(series, function(index) {
           options.series.push(series[index]);
         });
