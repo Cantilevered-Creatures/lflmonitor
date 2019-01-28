@@ -5,7 +5,9 @@ from database import dbconfig
 from models import User, Role
 
 from itertools import zip_longest
+from functools import total_ordering
 
+import re
 import colorsys
 import time
 import datetime
@@ -20,6 +22,49 @@ import RPi.GPIO as GPIO
 import blinkt
 
 app = Flask(__name__)
+
+shortDateOrder = {
+  's': 1,
+  'm': 2,
+  'h': 3,
+  'd': 4,
+  'w': 5,
+  'M': 6,
+  'y': 7
+}
+
+rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
+
+@total_ordering
+class XMLFile(object):
+  def __init__(self, path):
+    self.path = path
+    self.quotepath = urllib.parse.quote(path)
+    match = rePath.search(path)
+    self.shortDate = match.group(2)
+    self.dateCount = int(match.group(1))
+  def _is_valid_operand(self, other):
+    return (hasattr(other, "shortDate") and hasattr(other, "dateCount"))
+  def __eq__(self, other):
+    if not self._is_valid_operand(other):
+      return NotImplemented
+    return ((shortDateOrder[self.shortDate], self.dateCount) == (shortDateOrder[other.shortDate], other.dateCount))
+  def __ge__(self, other):
+    if not self._is_valid_operand(other):
+      return NotImplemented
+    return (shortDateOrder[self.shortDate] >= shortDateOrder[other.shortDate] and self.dateCount >= other.dateCount)
+  def __gt__(self, other):
+    if not self._is_valid_operand(other):
+      return NotImplemented
+    return (shortDateOrder[self.shortDate] > shortDateOrder[other.shortDate] or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate] and self.dateCount > other.dateCount))
+  def __le__(self, other):
+    if not self._is_valid_operand(other):
+      return NotImplemented
+    return (shortDateOrder[self.shortDate] <= shortDateOrder[other.shortDate] and self.dateCount <= other.dateCount)
+  def __lt__(self, other):
+    if not self._is_valid_operand(other):
+      return NotImplemented
+    return (shortDateOrder[self.shortDate] < shortDateOrder[other.shortDate] or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate] and self.dateCount < other.dateCount))
 
 class Door(object):
   def __init__(self):
@@ -207,8 +252,10 @@ def voltage():
 
   it = os.scandir("{}/".format(app.config['XML_PATH']))
   for entry in it:
-      if not entry.name.startswith('.') and entry.name.endswith('.xml') and entry.is_file():
-          xmlFiles.append(urllib.parse.quote(entry.path))
+    if not entry.name.startswith('.') and entry.name.endswith('.xml') and entry.is_file():
+      xmlFiles.append(XMLFile(entry.path))
+
+  xmlFiles.sort()
 
   templateData = {
     'xmlpaths' : xmlFiles

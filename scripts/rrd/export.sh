@@ -34,13 +34,13 @@ rrdtool xport --showtime -s now-1month -e now --step 10800 \
 DEF:a=$RRD_PATH:vbattery:AVERAGE \
 DEF:b=$RRD_PATH:vpanel:AVERAGE \
 XPORT:a:"Battery" \
-XPORT:b:"Panel" > $XML_PATH/voltage1m.xml
+XPORT:b:"Panel" > $XML_PATH/voltage1M.xml
 
 rrdtool xport --showtime -s now-3month -e now --step 43200 \
 DEF:a=$RRD_PATH:vbattery:AVERAGE \
 DEF:b=$RRD_PATH:vpanel:AVERAGE \
 XPORT:a:"Battery" \
-XPORT:b:"Panel" > $XML_PATH/voltage3m.xml
+XPORT:b:"Panel" > $XML_PATH/voltage3M.xml
 
 rrdtool xport --showtime -s now-1y -e now --step 86400 \
 DEF:a=$RRD_PATH:vbattery:AVERAGE \
