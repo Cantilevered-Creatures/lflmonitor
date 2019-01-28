@@ -297,9 +297,6 @@ def index():
       t.start()
     elif request.form['submit'] == 'Take Picture':
       takepicture('images/test')
-    elif request.form['submit'] == 'Exec Python':
-      templateData['execcmd'] = request.form['exec']
-      templateData['execoutput'] = exec(templateData['execcmd'])
 
   return render_template('index.html', **templateData)
 
