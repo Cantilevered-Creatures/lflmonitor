@@ -43,7 +43,8 @@ class XMLFile(object):
     match = rePath.search(path)
     self.shortDate = match.group(2)
     self.dateCount = int(match.group(1))
-  def _is_valid_operand(self, other):
+  @staticmethod
+  def _is_valid_operand(other):
     return (hasattr(other, "shortDate") and hasattr(other, "dateCount"))
   def __eq__(self, other):
     if not self._is_valid_operand(other):

@@ -25,5 +25,4 @@ class dbconfig():
     self.db_session = db_session
     
     Base.query = db_session.query_property()
-    import models
     Base.metadata.create_all(bind=engine)
