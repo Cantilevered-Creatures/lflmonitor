@@ -298,7 +298,12 @@ def index():
       t = threading.Thread(target=doorRoutine, args=(door,))
       t.start()
     elif request.form['submit'] == 'Take Picture':
-      takepicture('images/test')
+      blinkt.set_all(255, 255, 255, 0.5)
+      blinkt.show()
+      time.sleep(1)
+      takepicture('test')
+      blinkt.clear()
+      blinkt.show()
 
   return render_template('index.html', **templateData)
 
