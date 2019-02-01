@@ -289,6 +289,7 @@ def index():
   
   try:
     templateData['batteryVoltage'] = round(chanBattery.voltage * 5, 2)
+    templateData['panelVoltage'] = round(chanPanel.voltage * 5, 2)
   except NameError:
     print("Ignoring name error")
 
