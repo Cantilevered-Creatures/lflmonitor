@@ -18,4 +18,5 @@ This is a Python Flask project I'm creating to monitor activity in my Little Fre
 
 ## TODO
 - Document solar power configuration
-- Install in Little Free Library
+- Figure out an isolation circuit for monitoring solar panel volage
+- ~~Install in Little Free Library~~
