@@ -33,6 +33,8 @@ shortDateOrder = {
   'y': 7
 }
 
+secRainbow = 5
+
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
 
 @total_ordering
@@ -151,6 +153,35 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
       brightness = 1 - brightness
     
     blinkt.set_brightness(brightness)
+
+    blinkt.show()
+    time.sleep(0.01)
+    tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+  
+  if clear:
+    blinkt.clear()
+    blinkt.show()
+
+def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
+  spacing = 360.0 / 16.0
+  hue = 0
+
+  blinkt.set_clear_on_exit()
+
+  start_time = datetime.datetime.now()
+
+  tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+
+  while (tSeconds < runSeconds) :
+    brightness = math.ceil((tSeconds/runSeconds)*10)/10
+
+    if(decreaseBrightness):
+      brightness = 1 - brightness
+    
+    hue = int(time.time() * 100) % 360
+    h = (hue % 360) / 360.0
+    r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
+    blinkt.set_all(r, g, b, brightness)
 
     blinkt.show()
     time.sleep(0.01)
@@ -281,11 +312,7 @@ def index():
   doorSwitchSTS = GPIO.input(doorSwitch)
   now = datetime.datetime.now()
   timeString = now.strftime("%Y-%m-%d %H:%M")
-  templateData = {
-    'title' : 'HELLO!',
-    'time': timeString,
-    'door': doorSwitchSTS,
-  }
+  global secRainbow
   
   try:
     templateData['batteryVoltage'] = round(chanBattery.voltage * 5, 2)
@@ -294,8 +321,12 @@ def index():
     print("Ignoring name error")
 
   if request.method == 'POST':
+    secRainbow = int(request.form['secRainbow'])
     if request.form['submit'] == 'Rainbow':
-      t = threading.Thread(target=doorRoutine, args=(door,))
+      t = threading.Thread(target=rainbow, args=(secRainbow,))
+      t.start()
+    elif request.form['submit'] == 'ColorRotate':
+      t = threading.Thread(target=colorrotate, args=(secRainbow,))
       t.start()
     elif request.form['submit'] == 'Take Picture':
       blinkt.set_all(255, 255, 255, 0.5)
@@ -305,6 +336,13 @@ def index():
       blinkt.clear()
       blinkt.show()
 
+  templateData = {
+    'title' : 'HELLO!',
+    'time': timeString,
+    'door': doorSwitchSTS,
+    'secRainbow': secRainbow,
+  }
+  
   return render_template('index.html', **templateData)
 
 # picamera can only import on a pi
