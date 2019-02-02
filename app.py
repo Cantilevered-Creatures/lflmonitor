@@ -163,7 +163,6 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
     blinkt.show()
 
 def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
-  spacing = 360.0 / 16.0
   hue = 0
 
   blinkt.set_clear_on_exit()
@@ -178,13 +177,13 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     if(decreaseBrightness):
       brightness = 1 - brightness
     
-    hue = int(time.time() * 100) % 360
+    hue = int(time.time() * 200) % 360
     h = (hue % 360) / 360.0
     r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
     blinkt.set_all(r, g, b, brightness)
 
     blinkt.show()
-    time.sleep(0.01)
+    time.sleep(0.005)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
   
   if clear:
