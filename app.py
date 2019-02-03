@@ -204,7 +204,7 @@ def doorSwitch_callback(channel):
 def doorRoutine(door: Door):
   if door.canIRun():
 
-    rainbow(5, False)
+    colorrotate(4, False)
     blinkt.set_all(255, 255, 255, 1.0)
     blinkt.show()
 
@@ -221,7 +221,7 @@ def doorRoutine(door: Door):
 
     takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
-    rainbow(2,True,True)
+    colorrotate(2,True,True)
 
     door.stop()
 
@@ -312,12 +312,6 @@ def index():
   now = datetime.datetime.now()
   timeString = now.strftime("%Y-%m-%d %H:%M")
   global secRainbow
-  
-  try:
-    templateData['batteryVoltage'] = round(chanBattery.voltage * 5, 2)
-    templateData['panelVoltage'] = round(chanPanel.voltage * 5, 2)
-  except NameError:
-    print("Ignoring name error")
 
   if request.method == 'POST':
     secRainbow = int(request.form['secRainbow'])
@@ -341,6 +335,12 @@ def index():
     'door': doorSwitchSTS,
     'secRainbow': secRainbow,
   }
+
+  try:
+    templateData['batteryVoltage'] = round(chanBattery.voltage * 5, 2)
+    templateData['panelVoltage'] = round(chanPanel.voltage * 5, 2)
+  except NameError:
+    print("Ignoring name error")
   
   return render_template('index.html', **templateData)
 
@@ -376,7 +376,7 @@ else:
   app.config.from_pyfile('app.cfg.example')
 
 db = dbconfig(app.config['DB_PATH'])
-  
+
 app.secret_key = app.config['SECRET_KEY']
 
 user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
