@@ -1,13 +1,6 @@
 function getUrlParameter(sParam) {
   var sPageURL = window.location.search.substring(1),
-      sURLVariables = sPageURL.split("&"),
-      sParameterName;
+    sParameter = sPageURL.split("&").map((sURLVar) => sURLVar.split("=")).find((sParamName) => { return sParamName[0] === sParam });
 
-  sURLVariables.forEach((element) => {
-      sParameterName = element.split("=");
-
-      if (sParameterName[0] === sParam) {
-          return sParameterName[1] === "" ? true : decodeURIComponent(sParameterName[1]);
-      }
-  })
-};
+  return sParameter ? sParameter[1] : sParameter;
+}

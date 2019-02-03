@@ -98,20 +98,20 @@ if __name__ == '__main__':
 
 @app.before_first_request
 def create_user():
-    #init_db()
+  #init_db()
+  admin_role = [user_datastore.find_role('Admin')]
+  if(admin_role[0]==None):
+    user_datastore.create_role(name='Admin', description='Admin group')
+    db.db_session.commit()
     admin_role = [user_datastore.find_role('Admin')]
-    if(admin_role[0]==None):
-      user_datastore.create_role(name='Admin', description='Admin group')
-      db.db_session.commit()
-      admin_role = [user_datastore.find_role('Admin')]
 
-    if(not user_datastore.find_user(email=app.config['ADMIN_USER'])):
-      user_datastore.create_user(email=app.config['ADMIN_USER'], password=app.config['ADMIN_PASS'], roles=admin_role)
-      db.db_session.commit()
+  if(not user_datastore.find_user(email=app.config['ADMIN_USER'])):
+    user_datastore.create_user(email=app.config['ADMIN_USER'], password=app.config['ADMIN_PASS'], roles=admin_role)
+    db.db_session.commit()
 
 def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
+  args = [iter(iterable)] * n
+  return zip_longest(*args, fillvalue=fillvalue)
 
 def voltageLogger():
   while(True):
@@ -124,7 +124,7 @@ def voltageLogger():
       vPanel = round(chanPanel.voltage * 5, 3)
     else:
       vPanel = 0
-    
+
     rrdtool.update(app.config['RRD_PATH'], "N:{}:{}".format(vBattery, vPanel))
     time.sleep(app.config['RRD_INTERVAL'])
 
@@ -151,13 +151,13 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
 
     if(decreaseBrightness):
       brightness = 1 - brightness
-    
+
     blinkt.set_brightness(brightness)
 
     blinkt.show()
     time.sleep(0.01)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-  
+
   if clear:
     blinkt.clear()
     blinkt.show()
@@ -176,7 +176,7 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
 
     if(decreaseBrightness):
       brightness = 1 - brightness
-    
+
     hue = int(time.time() * 200) % 360
     h = (hue % 360) / 360.0
     r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
@@ -185,7 +185,7 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     blinkt.show()
     time.sleep(0.005)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-  
+
   if clear:
     blinkt.clear()
     blinkt.show()
@@ -341,7 +341,7 @@ def index():
     templateData['panelVoltage'] = round(chanPanel.voltage * 5, 2)
   except NameError:
     print("Ignoring name error")
-  
+
   return render_template('index.html', **templateData)
 
 # picamera can only import on a pi
