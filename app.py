@@ -357,8 +357,6 @@ if(app.config['ENV']!='development'):
   except FileNotFoundError:
     app.config.from_pyfile('app.cfg')
 
-  
-
   # Create the I2C bus
   i2c = busio.I2C(board.SCL, board.SDA)
 
