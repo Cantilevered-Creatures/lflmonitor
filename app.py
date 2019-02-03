@@ -351,7 +351,7 @@ if(app.config['ENV']!='development'):
   import busio
   import adafruit_ads1x15.ads1115 as ADS
   from adafruit_ads1x15.analog_in import AnalogIn
-  
+
   try:
     app.config.from_pyfile('/etc/lflmonitor/app.cfg')
   except FileNotFoundError:
