@@ -263,9 +263,9 @@ def imagelist():
     alignment=current_app.config.get('LINK_ALIGNMENT', ''),
     show_single_page=current_app.config.get('SHOW_SINGLE_PAGE', 'sm')
     )
-  
+
   pageimages = grouper(images[offset:offset+per_page], 3)
-  
+
   templateData = {
     'pagination' : pagination,
     'images': pageimages,
