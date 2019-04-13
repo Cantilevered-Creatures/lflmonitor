@@ -18,7 +18,7 @@ Little Free Library is a trademark of the non-profit [Little Free Library](https
 - Blinkt
 - Bootstrap v4
 
-## Solor Configuration
+## Solar Configuration
 ![Panel Overview](docs/images/panel_overview.jpg){:height="50%" width="50%"}
 1. Battery Pack
    1. This is a 4P3S pack of 18650 batteries with 11.1v nominal and 12.6v peak.
