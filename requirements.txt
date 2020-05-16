@@ -4,7 +4,11 @@ flask-security
 sqlalchemy
 RPi.GPIO
 blinkt
-picamera
 bcrypt
 adafruit-circuitpython-ads1x15
 rrdtool
+simpleaudio
+pydub
+werkzeug
+email_validator
+picamera

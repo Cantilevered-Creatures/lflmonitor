@@ -1,11 +1,16 @@
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory, current_app
+from flask import Flask, flash, request, render_template, redirect, url_for, send_from_directory, current_app
 from flask_paginate import Pagination, get_page_args
 from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, logout_user
 from database import dbconfig
 from models import User, Role
 
+from werkzeug.utils import secure_filename
+
 from itertools import zip_longest
 from functools import total_ordering
+
+from pydub import AudioSegment
+import simpleaudio as sa
 
 import re
 import colorsys
@@ -16,12 +21,15 @@ import threading
 import os
 import rrdtool
 import urllib
-
-import RPi.GPIO as GPIO
-
-import blinkt
+import subprocess
 
 app = Flask(__name__)
+
+if(app.config['ENV']!='development'):
+  import RPi.GPIO as GPIO
+  import blinkt
+else:
+  import RPi_emu.GPIO as GPIO
 
 shortDateOrder = {
   's': 1,
@@ -34,6 +42,14 @@ shortDateOrder = {
 }
 
 secRainbow = 5
+
+intVolume = 50
+MUSIC_FOLDER = 'music'
+MUSIC_EXTENSIONS = {'wav', 'mp3'}
+
+curSong = ''
+
+songPlaying = False
 
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
 
@@ -93,8 +109,8 @@ class Door(object):
 
 door = Door()
 
-if __name__ == '__main__':
-  app.run(port=5000)
+# if __name__ == '__main__':
+#   app.run(host='0.0.0.0',port=5000)
 
 @app.before_first_request
 def create_user():
@@ -225,10 +241,84 @@ def doorRoutine(door: Door):
 
     door.stop()
 
+def setVolume():
+  global intVolume
+  command = ["amixer", "sset", "PCM", "{}%".format(intVolume)]
+  subprocess.Popen(command)
+
+def loadSong(fileName):
+  fileExt = fileName.rsplit('.', 1)[1].lower()
+
+  if fileExt == 'wav':
+    return AudioSegment.from_wav("{}/{}".format(MUSIC_FOLDER, fileName))
+  elif fileExt == 'mp3':
+    return AudioSegment.from_mp3("{}/{}".format(MUSIC_FOLDER, fileName))
+  else:
+    return AudioSegment.empty
+
+def playSong(fileName):
+  global player
+  audioSegment = loadSong(fileName)
+  player = sa.play_buffer(
+    audioSegment.raw_data,
+    num_channels=audioSegment.channels,
+    bytes_per_sample=audioSegment.sample_width,
+    sample_rate=audioSegment.frame_rate
+  )
+
+def stopSong():
+  player.stop()
+
+def allowed_musicfile(filename):
+  return '.' in filename and filename.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
+
 @app.route('/logout')
 def logout():
   logout_user()
   return redirect(url_for('index'))
+
+@app.route('/musicPlayer', methods=['GET', 'POST'])
+@login_required
+def musicPlayer():
+  global intVolume
+  global MUSIC_FOLDER
+
+  if request.method == 'POST':
+    if 'submit' in request.form:
+      if request.form['submit'] == 'SetVolume':
+        intVolume = int(request.form['intVolume'])
+        setVolume()
+      elif request.form['submit'] == 'UploadMusic':
+        # check if the post request has the file part
+        if 'fileMusic' not in request.files:
+          flash('No file included')
+          return redirect(request.url)
+        fileMusic = request.files['fileMusic']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if fileMusic.filename == '':
+          flash('No file selected')
+          return redirect(request.url)
+        if fileMusic and allowed_musicfile(fileMusic.filename):
+          filename = secure_filename(fileMusic.filename)
+          fileMusic.save(os.path.join(MUSIC_FOLDER, filename))
+      elif request.form['submit'] == 'stopMusic':
+        stopSong()
+    elif 'playMusic' in request.form:
+      playSong(request.form['playMusic'])
+
+  musicFiles = []
+  it = os.scandir(MUSIC_FOLDER)
+  for entry in it:
+    if not entry.name.startswith('.') and entry.is_file():
+      musicFiles.append(entry.name)
+
+  templateData = {
+    'intVolume' : intVolume,
+    'musicFiles' : musicFiles
+  }
+
+  return render_template('musicPlayer.html', **templateData)
 
 @app.route('/imagelist')
 @login_required
@@ -237,14 +327,14 @@ def imagelist():
   search = False
   q = request.args.get('q')
   if q:
-      search = True
+    search = True
 
   images = []
 
   it = os.scandir('./images/')
   for entry in it:
-      if not entry.name.startswith('.') and entry.name.endswith('.jpg') and entry.is_file():
-          images.append(entry.name)
+    if not entry.name.startswith('.') and entry.name.endswith('.jpg') and entry.is_file():
+      images.append(entry.name)
 
   images.sort()
 
@@ -312,6 +402,7 @@ def index():
   now = datetime.datetime.now()
   timeString = now.strftime("%Y-%m-%d %H:%M")
   global secRainbow
+  global songPlaying
 
   if request.method == 'POST':
     secRainbow = int(request.form['secRainbow'])
@@ -328,6 +419,12 @@ def index():
       takepicture('test')
       blinkt.clear()
       blinkt.show()
+    elif request.form['submit'] == 'StartSong':
+      songPlaying = True
+      t = threading.Thread(target=song, args=())
+      t.start()
+    elif request.form['submit'] == 'StopSong':
+      songPlaying = False
 
   templateData = {
     'title' : 'HELLO!',
@@ -361,17 +458,28 @@ if(app.config['ENV']!='development'):
   i2c = busio.I2C(board.SCL, board.SDA)
 
   # Create the ADC object using the I2C bus
-  ads = ADS.ADS1115(i2c)
+  try:
+    ads = ADS.ADS1115(i2c)
 
-  # Create single-ended input on channel 0
-  chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
-  chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
+    if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
+      # Create single-ended input on channel 0
+      chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
+      chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
 
-  if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
-    t = threading.Thread(target=voltageLogger)
-    t.start()
+      t = threading.Thread(target=voltageLogger)
+      t.start()
+  except:
+    print("Error loading ADC module, voltage will not be logged.")
+
+  # Clear blinkt in case it was left on after a unexpected shutdown or crash
+  blinkt.clear()
+  blinkt.show()
+
+  
 else:
   app.config.from_pyfile('app.cfg.example')
+
+setVolume()
 
 db = dbconfig(app.config['DB_PATH'])
 
@@ -379,10 +487,6 @@ app.secret_key = app.config['SECRET_KEY']
 
 user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
 security = Security(app, user_datastore)
-
-# Clear blinkt in case it was left on after a unexpected shutdown or crash
-blinkt.clear()
-blinkt.show()
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)

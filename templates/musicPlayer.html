@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+  <div class="container">
+    <div class="form-group">
+      <input type="range" min="0" max="100" name="intVolume" value={{ intVolume }} />
+      <button type="submit" class="btn btn-dark" value="SetVolume" name="submit">Set Volume</button>
+    </div>
+    <div class="form-group">
+      <input type="file" name="fileMusic">
+      <button type="submit" class="btn btn-dark" value="UploadMusic" name="submit">Upload Music</button>
+    </div>
+    <div class="form-group">
+      <button type="submit" class="btn btn-dark" value="stopMusic" name="submit">Stop Music</button>
+    </div>
+    <div class="form-group">
+      <div class="row">
+        {% for musicFile in musicFiles %}
+          <button type="submit" class="btn btn-link" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
