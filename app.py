@@ -246,15 +246,30 @@ def setVolume():
   command = ["amixer", "sset", "PCM", "{}%".format(intVolume)]
   subprocess.Popen(command)
 
+def wavCache(fileName):
+  filePrefix = fileName.rsplit('.', 1)[0].lower()
+  fileExt = fileName.rsplit('.', 1)[1].lower()
+
+  try: 
+    return AudioSegment.from_wav("{}/{}.wav".format(MUSIC_FOLDER, filePrefix))
+  except:
+    if fileExt == 'mp3':
+      tempSeg = AudioSegment.from_mp3("{}/{}".format(MUSIC_FOLDER, fileName))
+    else:
+      return AudioSegment.empty()
+
+  tempSeg.export("{}/{}.wav".format(MUSIC_FOLDER, filePrefix), format="wav")
+
+  return tempSeg
+
+
 def loadSong(fileName):
   fileExt = fileName.rsplit('.', 1)[1].lower()
 
   if fileExt == 'wav':
     return AudioSegment.from_wav("{}/{}".format(MUSIC_FOLDER, fileName))
   elif fileExt == 'mp3':
-    return AudioSegment.from_mp3("{}/{}".format(MUSIC_FOLDER, fileName))
-  else:
-    return AudioSegment.empty
+    return wavCache(fileName)
 
 def playSong(fileName):
   global player
@@ -269,8 +284,8 @@ def playSong(fileName):
 def stopSong():
   player.stop()
 
-def allowed_musicfile(filename):
-  return '.' in filename and filename.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
+def allowed_musicfile(fileName):
+  return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
 
 @app.route('/logout')
 def logout():
