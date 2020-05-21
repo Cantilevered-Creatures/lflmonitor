@@ -27,3 +27,8 @@ XML_PATH='./xml'
 
 # RRD Interval to capture voltage stats
 RRD_INTERVAL=60
+
+# SPI Driver for bibliopixel
+LED_TYPE='APA102'
+CHANNEL_ORDER='RGB"
+LED_COUNT=8

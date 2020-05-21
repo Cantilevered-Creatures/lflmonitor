@@ -3,8 +3,8 @@ flask-paginate
 flask-security
 sqlalchemy
 RPi.GPIO
-blinkt
 bcrypt
+bibliopixel
 adafruit-circuitpython-ads1x15
 rrdtool
 simpleaudio

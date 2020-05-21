@@ -27,9 +27,12 @@ app = Flask(__name__)
 
 if(app.config['ENV']!='development'):
   import RPi.GPIO as GPIO
-  import blinkt
 else:
   import RPi_emu.GPIO as GPIO
+
+from bibliopixel.layout.strip import *
+from bibliopixel.drivers.driver_base import *
+from bibliopixel.drivers.SPI import SPI
 
 shortDateOrder = {
   's': 1,
@@ -144,11 +147,23 @@ def voltageLogger():
     rrdtool.update(app.config['RRD_PATH'], "N:{}:{}".format(vBattery, vPanel))
     time.sleep(app.config['RRD_INTERVAL'])
 
+def led_setbrightness(brightness: int):
+  if(brightness<0):
+    brightness = 0
+  elif(brightness>255):
+    brightness = 255
+  
+  ledStrip.brightness = brightness
+  ledStrip.push_to_driver()
+
+def led_clear():
+  ledStrip.all_off()
+  ledStrip.push_to_driver()
+  
+
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
   hue = 0
-
-  blinkt.set_clear_on_exit()
 
   start_time = datetime.datetime.now()
 
@@ -157,31 +172,29 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
   while (tSeconds < runSeconds) :
     hue = int(time.time() * 100) % 360
 
-    for x in range(blinkt.NUM_PIXELS):
+    for x in range(app.config['LED_COUNT']):
       offset = x * spacing
       h = ((hue + offset) % 360) / 360.0
-      r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
-      blinkt.set_pixel(x, r, g, b)
+      ledStrip.setHSV(x, (h,1.0,1.0))
+      ledStrip.setRGB(x)
 
     brightness = math.ceil((tSeconds/runSeconds)*10)/10
 
     if(decreaseBrightness):
       brightness = 1 - brightness
 
-    blinkt.set_brightness(brightness)
+    ledStrip.set_brightness(int(brightness *255))
 
-    blinkt.show()
+    ledStrip.push_to_driver()
+
     time.sleep(0.01)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
   if clear:
-    blinkt.clear()
-    blinkt.show()
+    led_clear()
 
 def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   hue = 0
-
-  blinkt.set_clear_on_exit()
 
   start_time = datetime.datetime.now()
 
@@ -196,15 +209,18 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     hue = int(time.time() * 200) % 360
     h = (hue % 360) / 360.0
     r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
-    blinkt.set_all(r, g, b, brightness)
+    
+    led_setbrightness(int(brightness *255))
 
-    blinkt.show()
+    ledStrip.fillRGB(r,g,b)
+
+    ledStrip.push_to_driver()
+
     time.sleep(0.005)
     tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
   if clear:
-    blinkt.clear()
-    blinkt.show()
+    led_clear()
 
 def takepicture(imageName: str):
   with picamera.PiCamera() as camera:
@@ -221,8 +237,9 @@ def doorRoutine(door: Door):
   if door.canIRun():
 
     colorrotate(4, False)
-    blinkt.set_all(255, 255, 255, 1.0)
-    blinkt.show()
+    ledStrip.brightness = 255
+    ledStrip.fillRGB(255, 255, 255)
+    ledStrip.push_to_driver()
 
     start_time = datetime.datetime.now()
 
@@ -428,12 +445,12 @@ def index():
       t = threading.Thread(target=colorrotate, args=(secRainbow,))
       t.start()
     elif request.form['submit'] == 'Take Picture':
-      blinkt.set_all(255, 255, 255, 0.5)
-      blinkt.show()
+      ledStrip.brightness = 255
+      ledStrip.fillRGB(255, 255, 255)
+      ledStrip.push_to_driver()
       time.sleep(1)
       takepicture('test')
-      blinkt.clear()
-      blinkt.show()
+      led_clear()
     elif request.form['submit'] == 'StartSong':
       songPlaying = True
       t = threading.Thread(target=song, args=())
@@ -486,11 +503,6 @@ if(app.config['ENV']!='development'):
   except:
     print("Error loading ADC module, voltage will not be logged.")
 
-  # Clear blinkt in case it was left on after a unexpected shutdown or crash
-  blinkt.clear()
-  blinkt.show()
-
-  
 else:
   app.config.from_pyfile('app.cfg.example')
 
@@ -512,3 +524,6 @@ doorSwitchSTS = GPIO.LOW
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
+
+ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
+ledStrip = Strip(ledDriver)
