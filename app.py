@@ -46,7 +46,7 @@ shortDateOrder = {
 
 secRainbow = 5
 
-intVolume = 50
+intVolume = 0
 MUSIC_FOLDER = 'music'
 MUSIC_EXTENSIONS = {'wav', 'mp3'}
 
@@ -175,7 +175,7 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
     for x in range(app.config['LED_COUNT']):
       offset = x * spacing
       h = int((hue + offset) % 360)
-      ledStrip.setHSV(x, (h,100,100))
+      ledStrip.setHSV(x, (h,255,255))
 
     brightness = math.ceil((tSeconds/runSeconds)*10)/10
 
@@ -207,11 +207,10 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
 
     hue = int(time.time() * 200) % 360
     h = (hue % 360) / 360.0
-    r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
     
-    led_setbrightness(int(brightness *255))
+    led_setbrightness(int(brightness * 255))
 
-    ledStrip.fillRGB(r,g,b)
+    ledStrip.fillHSV(h,255,255)
 
     ledStrip.push_to_driver()
 
@@ -510,6 +509,8 @@ else:
   ledDriver = SimPixel(num=8)
 
 ledStrip = Strip(ledDriver)
+
+intVolume=app.config['STARTING_VOLUME']
 
 setVolume()
 
