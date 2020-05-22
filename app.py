@@ -503,8 +503,14 @@ if(app.config['ENV']!='development'):
   except:
     print("Error loading ADC module, voltage will not be logged.")
 
+  ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
+
 else:
+  from bibliopixel.drivers.SimPixel import *
   app.config.from_pyfile('app.cfg.example')
+  ledDriver = SimPixel(num=8)
+
+ledStrip = Strip(ledDriver)
 
 setVolume()
 
@@ -525,5 +531,3 @@ GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
 
-ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
-ledStrip = Strip(ledDriver)
