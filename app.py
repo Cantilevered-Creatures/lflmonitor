@@ -206,7 +206,7 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
       brightness = 1 - brightness
 
     hue = int(time.time() * 200) % 360
-    h = (hue % 360) / 360.0
+    h = int((hue % 360) / 360.0)
     
     led_setbrightness(int(brightness * 255))
 
