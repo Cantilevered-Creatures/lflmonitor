@@ -174,9 +174,8 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
 
     for x in range(app.config['LED_COUNT']):
       offset = x * spacing
-      h = ((hue + offset) % 360) / 360.0
-      ledStrip.setHSV(x, (h,1.0,1.0))
-      ledStrip.setRGB(x)
+      h = int((hue + offset) % 360)
+      ledStrip.setHSV(x, (h,100,100))
 
     brightness = math.ceil((tSeconds/runSeconds)*10)/10
 
