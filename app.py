@@ -210,7 +210,7 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     
     led_setbrightness(int(brightness * 255))
 
-    ledStrip.fillHSV(h,255,255)
+    ledStrip.fillHSV((h,255,255))
 
     ledStrip.push_to_driver()
 
