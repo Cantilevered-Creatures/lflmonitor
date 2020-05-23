@@ -205,8 +205,8 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     if(decreaseBrightness):
       brightness = 1 - brightness
 
-    hue = int(time.time() * 200) % 360
-    h = int((hue % 360) / 360.0)
+    hue = int(time.time() * 100) % 360
+    h = int(hue % 360)
     
     led_setbrightness(int(brightness * 255))
 
@@ -221,11 +221,12 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
     led_clear()
 
 def takepicture(imageName: str):
-  with picamera.PiCamera() as camera:
-    camera.resolution = (1920, 1080)
-    time.sleep(1) # Camera warm-up time
-    filename = 'images/%s.jpg' % imageName
-    camera.capture(filename)
+  if(app.config['ENABLE_CAMERA']):
+    with picamera.PiCamera() as camera:
+      camera.resolution = (1920, 1080)
+      time.sleep(1) # Camera warm-up time
+      filename = 'images/%s.jpg' % imageName
+      camera.capture(filename)
 
 def doorSwitch_callback(channel):
   t = threading.Thread(target=doorRoutine, args=(door,))

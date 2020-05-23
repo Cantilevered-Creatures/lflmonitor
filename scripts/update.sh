@@ -1,4 +1,4 @@
 #!/bin/bash
 
 sudo pip3 install -r ../requirements.txt
-sudo systemctl restart uwsgi.service
+#sudo systemctl restart uwsgi.service
