@@ -5,9 +5,6 @@
     {{ pagination.info }}
     {{ pagination.links }}
     {% for imagegroup in images %}
-    <div>
-      <img src="images/{{ image }}" class="img-fluid ${3|rounded-top,rounded-right,rounded-bottom,rounded-left,rounded-circle,|}" alt="">
-    </div>
     <div class="row">
       {% for image in imagegroup %}
       <div class="col-md-4">
