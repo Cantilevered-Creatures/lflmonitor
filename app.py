@@ -416,6 +416,7 @@ def voltage():
   return render_template('voltagegraph.html', **templateData)
 
 @app.route('/images/<path:path>')
+@app.route('/images/350/<path:path>')
 @login_required
 def send_image(path):
     return send_from_directory('images', path)
