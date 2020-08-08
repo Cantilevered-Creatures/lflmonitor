@@ -275,7 +275,7 @@ def startShow(songPath):
 
 def stopShow():
   global showProcess
-  showProcess.send_signal(signal=2)
+  showProcess.send_signal(2)
 
 def setVolume():
   global intVolume
