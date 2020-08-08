@@ -53,6 +53,7 @@ MUSIC_EXTENSIONS = {'wav', 'mp3'}
 curSong = ''
 
 songPlaying = False
+showProcess = None
 
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
 
@@ -257,6 +258,21 @@ def doorRoutine(door: Door):
 
     door.stop()
 
+def startShow(songPath):
+  global showProcess
+  command = ["python3", "py/synchronized_lights.py", "--file=~lflmonitor/music/{}".format(songPath)]
+  
+  if showProcess is not None & showProcess.poll() is None:
+    stopShow()
+    showProcess.wait()
+  
+  showProcess = subprocess.Popen(command, cwd="~/lightshowpi")
+  showProcess.poll()
+
+def stopShow():
+  global showProcess
+  showProcess.send_signal(signal=2)
+
 def setVolume():
   global intVolume
   command = ["amixer", "sset", "PCM", "{}%".format(intVolume)]
@@ -334,9 +350,9 @@ def musicPlayer():
           filename = secure_filename(fileMusic.filename)
           fileMusic.save(os.path.join(MUSIC_FOLDER, filename))
       elif request.form['submit'] == 'stopMusic':
-        stopSong()
+        stopShow()
     elif 'playMusic' in request.form:
-      playSong(request.form['playMusic'])
+      startShow(request.form['playMusic'])
 
   musicFiles = []
   it = os.scandir(MUSIC_FOLDER)
