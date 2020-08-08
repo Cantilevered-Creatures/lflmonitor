@@ -262,9 +262,10 @@ def startShow(songPath):
   global showProcess
   command = ["python3", "py/synchronized_lights.py", "--file=~lflmonitor/music/{}".format(songPath)]
   
-  if showProcess is not None & showProcess.poll() is None:
-    stopShow()
-    showProcess.wait()
+  if showProcess is not None:
+    if showProcess.poll() is None:
+      stopShow()
+      showProcess.wait()
   
   showProcess = subprocess.Popen(command, cwd="~/lightshowpi")
   showProcess.poll()
