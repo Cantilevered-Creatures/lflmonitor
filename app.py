@@ -267,7 +267,7 @@ def startShow(songPath):
       stopShow()
       showProcess.wait()
   
-  showProcess = subprocess.Popen(command, cwd="~/lightshowpi")
+  showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi/")
   showProcess.poll()
 
 def stopShow():
