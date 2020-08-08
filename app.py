@@ -260,14 +260,17 @@ def doorRoutine(door: Door):
 
 def startShow(songPath):
   global showProcess
-  command = ["python3", "py/synchronized_lights.py", "--file=~lflmonitor/music/{}".format(songPath)]
+  command = ["python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
   
   if showProcess is not None:
     if showProcess.poll() is None:
       stopShow()
       showProcess.wait()
+
+  my_env = os.environ.copy()
+  my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
   
-  showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi/")
+  showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
   showProcess.poll()
 
 def stopShow():
