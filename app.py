@@ -1,8 +1,10 @@
 from flask import Flask, flash, request, render_template, redirect, url_for, send_from_directory, current_app
 from flask_paginate import Pagination, get_page_args
 from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, logout_user
+from flask_socketio import SocketIO, emit
 from database import dbconfig
 from models import User, Role
+from songinfo import Song
 
 from werkzeug.utils import secure_filename
 
@@ -23,12 +25,16 @@ import rrdtool
 import urllib
 import subprocess
 
+#from lightshowpi.py.synchronized_lights import Lightshow
+
 app = Flask(__name__)
 
 if(app.config['ENV']!='development'):
   import RPi.GPIO as GPIO
 else:
   import RPi_emu.GPIO as GPIO
+
+socketio = SocketIO(app)
 
 from bibliopixel.layout.strip import *
 from bibliopixel.drivers.driver_base import *
@@ -51,6 +57,7 @@ MUSIC_FOLDER = 'music'
 MUSIC_EXTENSIONS = {'wav', 'mp3'}
 
 curSong = ''
+currentSongClients = 0
 
 songPlaying = False
 showProcess = None
@@ -259,8 +266,8 @@ def doorRoutine(door: Door):
     door.stop()
 
 def startShow(songPath):
-  global showProcess
-  command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
+  global showProcess, currentSong
+  command = ["python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
   
   if showProcess is not None:
     if showProcess.poll() is None:
@@ -269,13 +276,17 @@ def startShow(songPath):
 
   my_env = os.environ.copy()
   my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
+
+  currentSong.name = songPath
   
   showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
-  showProcess.poll()
+  showProcess.wait()
+  currentSong.name = ""
 
 def stopShow():
-  global showProcess
+  global showProcess, currentSong
   showProcess.send_signal(2)
+  currentSong.name = ""
 
 def setVolume():
   global intVolume
@@ -322,6 +333,30 @@ def stopSong():
 
 def allowed_musicfile(fileName):
   return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
+
+currentSongThread = threading.Thread()
+
+currentSong = Song()
+
+@socketio.on('connect', namespace = '/currentsong')
+def currentSongConnect():
+  global currentSongThread, currentSongClients
+  currentSongClients += 1
+  emit('songUpdate', { 'name': currentSong.name })
+  if not currentSongThread.isAlive():
+    currentSongThread = socketio.start_background_task(target=transmitSong)
+
+@socketio.on('disconnect', namespace = '/currentsong')
+def currentSongDisconnect():
+  global currentSongClients
+  currentSongClients -= 1
+
+def transmitSong():
+  global currentSongClients, currentSong
+  while currentSongClients > 0:
+    socketio.sleep(5)
+    socketio.emit('songUpdate', { 'name': currentSong.name }, namespace = '/currentsong')
+
 
 @app.route('/logout')
 def logout():

@@ -1,6 +1,9 @@
 flask
 flask-paginate
 flask-security
+flask-socketio
+pyalsaaudio
+mutagen
 sqlalchemy
 RPi.GPIO
 bcrypt
@@ -12,3 +15,11 @@ pydub
 werkzeug
 email_validator
 picamera
+numpy 
+Beautifulsoup4
+simplejson
+twython
+emoji
+spidev 
+pillow 
+pyserial

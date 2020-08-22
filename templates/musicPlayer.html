@@ -1,10 +1,23 @@
 {% extends "base.html" %}
 
+{% block script %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA==" crossorigin="anonymous"></script>
+    <script src="/static/music.js"></script>
+{% endblock %}
+
 {% block page_content %}
   <div class="container">
     <div class="form-group">
-      <input type="range" min="0" max="100" name="intVolume" value={{ intVolume }} />
-      <button type="submit" class="btn btn-dark" value="SetVolume" name="submit">Set Volume</button>
+      <div class="row">
+        <div class="col-md-4">
+          <input type="range" min="0" max="100" name="intVolume" value={{ intVolume }} />
+          <button type="submit" class="btn btn-dark" value="SetVolume" name="submit">Set Volume</button>
+        </div>
+        <div class="col-md-4">
+          <h2>Playing song:</h2>
+          <h5 id="playingSong"></h5>
+        </div>
+      </div>
     </div>
     <div class="form-group">
       <input type="file" name="fileMusic">
