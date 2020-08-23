@@ -355,7 +355,7 @@ def transmitSong():
   global currentSongClients, currentSong
   while currentSongClients > 0:
     socketio.sleep(5)
-    socketio.emit('songUpdate', { 'name': currentSong.name }, namespace = '/currentsong')
+    socketio.emit('songUpdate', { 'name': currentSong.name }, namespace = '/currentsong', broadcast = True)
 
 
 @app.route('/logout')
