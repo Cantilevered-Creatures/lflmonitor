@@ -334,8 +334,6 @@ def stopSong():
 def allowed_musicfile(fileName):
   return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
 
-currentSongThread = socketio.start_background_task(target=transmitSong) #threading.Thread()
-
 currentSong = Song()
 
 @socketio.on('connect', namespace = '/currentsong')
@@ -357,6 +355,7 @@ def transmitSong():
     socketio.sleep(5)
     socketio.emit('songUpdate', { 'name': currentSong.name }, namespace = '/currentsong', broadcast = True)
 
+currentSongThread = socketio.start_background_task(target=transmitSong) #threading.Thread()
 
 @app.route('/logout')
 def logout():
