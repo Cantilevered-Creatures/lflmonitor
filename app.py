@@ -267,7 +267,7 @@ def doorRoutine(door: Door):
 
 def startShow(songPath):
   global showProcess, currentSong
-  command = ["python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
+  command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
   
   if showProcess is not None:
     if showProcess.poll() is None:
