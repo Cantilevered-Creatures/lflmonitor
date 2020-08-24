@@ -343,7 +343,7 @@ def currentSongConnect():
   global currentSongThread, currentSongClients
   currentSongClients += 1
   emit('songUpdate', { 'name': currentSong.name })
-  if not currentSongThread.isAlive():
+  if not currentSongThread.is_alive():
     currentSongThread = socketio.start_background_task(target=transmitSong)
 
 @socketio.on('disconnect', namespace = '/currentsong')
