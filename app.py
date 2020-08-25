@@ -34,7 +34,7 @@ if(app.config['ENV']!='development'):
 else:
   import RPi_emu.GPIO as GPIO
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, logger=True)
 
 from bibliopixel.layout.strip import *
 from bibliopixel.drivers.driver_base import *
