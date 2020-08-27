@@ -336,7 +336,7 @@ currentSong = Song()
 class currentSong(Resource):
   def get(self):
     global currentSong
-    if(showProcess.Poll() != None):
+    if(showProcess.poll() != None):
       currentSong.name = ""
     return { 'name': currentSong.name }
 
