@@ -1,7 +1,7 @@
 flask
 flask-paginate
 flask-security
-flask-socketio
+flask-restful
 pyalsaaudio
 mutagen
 sqlalchemy

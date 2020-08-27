@@ -1,7 +1,7 @@
 from flask import Flask, flash, request, render_template, redirect, url_for, send_from_directory, current_app
 from flask_paginate import Pagination, get_page_args
 from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, logout_user
-from flask_socketio import SocketIO, emit
+from flask_restful import Resource, Api
 from database import dbconfig
 from models import User, Role
 from songinfo import Song
@@ -28,13 +28,12 @@ import subprocess
 #from lightshowpi.py.synchronized_lights import Lightshow
 
 app = Flask(__name__)
+api = Api(app)
 
 if(app.config['ENV']!='development'):
   import RPi.GPIO as GPIO
 else:
   import RPi_emu.GPIO as GPIO
-
-socketio = SocketIO(app, logger=True)
 
 from bibliopixel.layout.strip import *
 from bibliopixel.drivers.driver_base import *
@@ -57,7 +56,6 @@ MUSIC_FOLDER = 'music'
 MUSIC_EXTENSIONS = {'wav', 'mp3'}
 
 curSong = ''
-currentSongClients = 0
 
 songPlaying = False
 showProcess = None
@@ -336,26 +334,14 @@ def allowed_musicfile(fileName):
 
 currentSong = Song()
 
-@socketio.on('connect', namespace = '/currentsong')
-def currentSongConnect():
-  global currentSongThread, currentSongClients
-  currentSongClients += 1
-  emit('songUpdate', { 'name': currentSong.name })
-  # if not currentSongThread.is_alive():
-  #   currentSongThread = socketio.start_background_task(target=transmitSong)
+class currentSong():
+  def __init__(self):
 
-@socketio.on('disconnect', namespace = '/currentsong')
-def currentSongDisconnect():
-  global currentSongClients
-  currentSongClients -= 1
+  def get(self):
+    global currentSong
+    return { 'name': currentSong.name }
 
-def transmitSong():
-  global currentSongClients, currentSong
-  while True: #currentSongClients > 0:
-    socketio.sleep(5)
-    socketio.emit('songUpdate', { 'name': currentSong.name }, namespace = '/currentsong', broadcast = True)
-
-currentSongThread = socketio.start_background_task(target=transmitSong) #threading.Thread()
+api.add_resource(currentSong, '/currentsong')
 
 @app.route('/logout')
 def logout():

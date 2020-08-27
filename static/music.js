@@ -1,9 +1,7 @@
-$(document).ready(function() {
-  // sending a connect request to the server.
-  var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + '/currentsong');
-
-  socket.on('songUpdate', function(msg) {
-    console.log('Current song updated');
-    $('#playingSong').val(msg.name);
+setInterval(function() {
+  $.ajax({
+    url: location.protocol + '//' + document.domain + ':' + location.port + '/currentsong'
+  }).then(function(data){
+    $("#playingSong").val(data.name);
   });
-});
+}, 5000);
