@@ -335,8 +335,6 @@ def allowed_musicfile(fileName):
 currentSong = Song()
 
 class currentSong():
-  def __init__(self):
-
   def get(self):
     global currentSong
     return { 'name': currentSong.name }
