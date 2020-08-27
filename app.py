@@ -334,7 +334,7 @@ def allowed_musicfile(fileName):
 
 currentSong = Song()
 
-class currentSong():
+class currentSong(Resource):
   def get(self):
     global currentSong
     return { 'name': currentSong.name }
