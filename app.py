@@ -278,8 +278,7 @@ def startShow(songPath):
   currentSong.name = songPath
   
   showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
-  showProcess.wait()
-  currentSong.name = ""
+  showProcess.poll()
 
 def stopShow():
   global showProcess, currentSong
@@ -337,6 +336,8 @@ currentSong = Song()
 class currentSong(Resource):
   def get(self):
     global currentSong
+    if(showProcess.Poll() != None):
+      currentSong.name = ""
     return { 'name': currentSong.name }
 
 api.add_resource(currentSong, '/currentsong')
