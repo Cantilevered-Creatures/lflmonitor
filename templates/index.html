@@ -15,6 +15,15 @@
       <button type="submit" class="btn btn-dark" value="ColorRotate" name="submit">Color Rotate</button>
     </div>
     <div class="form-group">
+      <select name="colorList">
+        {% for color in colors %}
+        <option>{{ color }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-dark" value="setColor" name="submit">Set</button>
+      <button type="submit" class="btn btn-dark" value="clearColor" name="submit">Clear</button>
+    </div>
+    <div class="form-group">
       <p>Start song:</p>
       <button type="submit" class="btn btn-dark" value="StartSong" name="submit">Start Song</button>
       <button type="submit" class="btn btn-dark" value="StopSong" name="submit">Stop Song</button>

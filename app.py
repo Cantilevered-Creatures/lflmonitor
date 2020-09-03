@@ -38,6 +38,7 @@ else:
 from bibliopixel.layout.strip import *
 from bibliopixel.drivers.driver_base import *
 from bibliopixel.drivers.SPI import SPI
+import bibliopixel.colors as colors
 
 shortDateOrder = {
   's': 1,
@@ -502,12 +503,20 @@ def index():
       t.start()
     elif request.form['submit'] == 'StopSong':
       songPlaying = False
+    elif request.form['submit'] == 'setColor':
+      ledStrip.brightness = 255
+      ledStrip.fillRGB(*colors.name_to_color(request.form['colorList']))
+      ledStrip.push_to_driver()
+    elif request.form['submit'] == 'clearColor':
+      led_clear()
+    
 
   templateData = {
     'title' : 'HELLO!',
     'time': timeString,
     'door': doorSwitchSTS,
     'secRainbow': secRainbow,
+    'colors': colors.tables.CANONICAL_DICT
   }
 
   try:
