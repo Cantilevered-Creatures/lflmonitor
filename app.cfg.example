@@ -30,7 +30,8 @@ RRD_INTERVAL=60
 
 # SPI Driver for bibliopixel
 LED_TYPE='APA102'
-CHANNEL_ORDER='RGB'
+# Note: Blinkt has Blue and Red channels backwards, most LEDs are RBG
+CHANNEL_ORDER='BGR' 
 LED_COUNT=8
 
 STARTING_VOLUME=80
