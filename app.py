@@ -52,6 +52,7 @@ shortDateOrder = {
 secRainbow = 5
 
 intVolume = 0
+configName = 'defaults'
 MUSIC_FOLDER = 'music'
 MUSIC_EXTENSIONS = {'wav', 'mp3'}
 
@@ -264,9 +265,12 @@ def doorRoutine(door: Door):
     door.stop()
 
 def startShow(songPath):
-  global showProcess, currentSong
+  global showProcess, currentSong, configName
   command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
-  
+
+  if configName != "defaults":
+    command.append("--config={}.cfg".format(configName))
+
   if showProcess is not None:
     if showProcess.poll() is None:
       stopShow()
@@ -350,7 +354,7 @@ def logout():
 @app.route('/musicPlayer', methods=['GET', 'POST'])
 @login_required
 def musicPlayer():
-  global intVolume
+  global intVolume, configName
   global MUSIC_FOLDER
 
   if request.method == 'POST':
@@ -375,6 +379,7 @@ def musicPlayer():
       elif request.form['submit'] == 'stopMusic':
         stopShow()
     elif 'playMusic' in request.form:
+      configName = request.form['configName']
       startShow(request.form['playMusic'])
 
   musicFiles = []
@@ -385,7 +390,8 @@ def musicPlayer():
 
   templateData = {
     'intVolume' : intVolume,
-    'musicFiles' : musicFiles
+    'musicFiles' : musicFiles,
+    'configName' : configName
   }
 
   return render_template('musicPlayer.html', **templateData)
