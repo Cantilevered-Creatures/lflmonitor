@@ -268,6 +268,9 @@ def doorRoutine(door: Door):
 
     door.stop()
 
+curSong = Song()
+curSong.name = ""
+
 def startShow(songPath):
   global showThread, currentSong, configName
   # command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
@@ -286,7 +289,7 @@ def startShow(songPath):
   ls.configPath = "{}.cfg".format(configName)
   ls.loadHC()
 
-  currentSong.name = songPath
+  curSong.name = songPath
 
   showThread = threading.Thread(target=ls.play_song)
   showThread.start()
@@ -299,7 +302,7 @@ def startShow(songPath):
 def stopShow():
   global showThread, currentSong
   showThread._stop()
-  currentSong.name = ""
+  curSong.name = ""
 
 def setVolume():
   global intVolume
@@ -347,14 +350,12 @@ def stopSong():
 def allowed_musicfile(fileName):
   return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
 
-currentSong = Song()
-
 class currentSong(Resource):
   def get(self):
     global currentSong, showThread
-    if not showThread:
-      currentSong.name = ""
-    return { 'name': currentSong.name }
+    if not showThread.is_alive():
+      curSong.name = ""
+    return { 'name': curSong.name }
 
 api.add_resource(currentSong, '/currentsong')
 
