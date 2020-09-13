@@ -1,0 +1,3 @@
+[submodule "lightshowpi"]
+	path = lightshowpi
+	url = https://github.com/HoveringHalibut/lightshowpi

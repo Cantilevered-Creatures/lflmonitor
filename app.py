@@ -24,21 +24,23 @@ import os
 import rrdtool
 import urllib
 import subprocess
+import sys
+sys.path.insert(0, "./lightshowpi/py")
+os.environ["SYNCHRONIZED_LIGHTS_HOME"] = "{}/lightshowpi".format(os.curdir)
 
-#from lightshowpi.py.synchronized_lights import Lightshow
+from lightshowpi.py.synchronized_lights import Lightshow
 
 app = Flask(__name__)
 api = Api(app)
 
-if(app.config['ENV']!='development'):
-  import RPi.GPIO as GPIO
-else:
-  import RPi_emu.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 from bibliopixel.layout.strip import *
 from bibliopixel.drivers.driver_base import *
 from bibliopixel.drivers.SPI import SPI
 import bibliopixel.colors as colors
+
+ls = Lightshow()
 
 shortDateOrder = {
   's': 1,
@@ -60,7 +62,8 @@ MUSIC_EXTENSIONS = {'wav', 'mp3'}
 curSong = ''
 
 songPlaying = False
-showProcess = None
+# showProcess = None
+showThread = threading.Thread()
 
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
 
@@ -266,28 +269,36 @@ def doorRoutine(door: Door):
     door.stop()
 
 def startShow(songPath):
-  global showProcess, currentSong, configName
-  command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
+  global showThread, currentSong, configName
+  # command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
 
-  if configName != "defaults":
-    command.append("--config={}.cfg".format(configName))
+  # if configName != "defaults":
+  #   command.append("--config={}.cfg".format(configName))
 
-  if showProcess is not None:
-    if showProcess.poll() is None:
-      stopShow()
-      showProcess.wait()
+  if showThread is not None:
+    if showThread.is_alive():
+      showThread._stop()
+  #   if showProcess.poll() is None:
+  #     stopShow()
+  #     showProcess.wait()
 
-  my_env = os.environ.copy()
-  my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
+  ls.filepath = "{}/music/{}".format(os.curdir, songPath)
+  ls.configPath = "{}.cfg".format(configName)
+  ls.loadHC()
 
   currentSong.name = songPath
-  
-  showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
-  showProcess.poll()
+
+  showThread = threading.Thread(target=ls.play_song)
+  showThread.start()
+
+  # my_env = os.environ.copy()
+  # my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
+  # showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
+  # showProcess.poll()
 
 def stopShow():
-  global showProcess, currentSong
-  showProcess.send_signal(2)
+  global showThread, currentSong
+  showThread._stop()
   currentSong.name = ""
 
 def setVolume():
@@ -340,8 +351,8 @@ currentSong = Song()
 
 class currentSong(Resource):
   def get(self):
-    global currentSong
-    if(showProcess.poll() != None):
+    global currentSong, showThread
+    if not showThread:
       currentSong.name = ""
     return { 'name': currentSong.name }
 
@@ -557,13 +568,10 @@ if(app.config['ENV']!='development'):
   except:
     print("Error loading ADC module, voltage will not be logged.")
 
-  ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
-
 else:
-  from bibliopixel.drivers.SimPixel import *
   app.config.from_pyfile('app.cfg.example')
-  ledDriver = SimPixel(num=8)
 
+ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
 ledStrip = Strip(ledDriver)
 
 intVolume=app.config['STARTING_VOLUME']
