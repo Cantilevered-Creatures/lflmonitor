@@ -240,7 +240,7 @@ def takepicture(imageName: str):
       camera.capture(filename)
 
 def doorSwitch_callback(channel):
-  t = threading.Thread(target=doorRoutine, args=(door,))
+  t = threading.Thread(target=doorRoutine, args=[door])
   t.start()
 
 def doorRoutine(door: Door):
@@ -300,7 +300,7 @@ def startShow(songPath, callback = None):
 
   curSong.name = songPath
 
-  showThread = threading.Thread(target=showWatcher, args=(callback))
+  showThread = threading.Thread(target=showWatcher, args=[callback])
   showThread.start()
 
   # my_env = os.environ.copy()
