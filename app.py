@@ -250,10 +250,9 @@ def doorRoutine(door: Door):
 
     if not showThread.is_alive():
       configName = "defaults"
-      startShow('01_-_Reading_Rainbow_Theme_Song.mp3')
+      startShow('01_-_Reading_Rainbow_Theme_Song.mp3', doorLightsOn)
 
     #colorrotate(4, False)
-    
 
     start_time = datetime.datetime.now()
 
@@ -263,11 +262,6 @@ def doorRoutine(door: Door):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-      if(not showThread.is_alive() and showRunning):
-        showRunning = False
-        ledStrip.brightness = 255
-        ledStrip.fillRGB(255, 255, 255)
-        ledStrip.push_to_driver()
 
     time.sleep(2)
 
@@ -277,10 +271,16 @@ def doorRoutine(door: Door):
 
     door.stop()
 
+def doorLightsOn():
+  if GPIO.input(doorSwitch) == 0:
+    ledStrip.brightness = 255
+    ledStrip.fillRGB(255, 255, 255)
+    ledStrip.push_to_driver()
+
 curSong = Song()
 curSong.name = ""
 
-def startShow(songPath):
+def startShow(songPath, callback = None):
   global showThread, currentSong, configName
   # command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
 
@@ -300,13 +300,18 @@ def startShow(songPath):
 
   curSong.name = songPath
 
-  showThread = threading.Thread(target=ls.play_song)
+  showThread = threading.Thread(target=showWatcher, args=(callback))
   showThread.start()
 
   # my_env = os.environ.copy()
   # my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
   # showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
   # showProcess.poll()
+
+def showWatcher(callback):
+  ls.play_song()
+  if callback:
+    callback()
 
 def stopShow():
   global showThread, currentSong
