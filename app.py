@@ -244,12 +244,16 @@ def doorSwitch_callback(channel):
   t.start()
 
 def doorRoutine(door: Door):
+  global showThread,configName
   if door.canIRun():
+    showRunning = True
 
-    colorrotate(4, False)
-    ledStrip.brightness = 255
-    ledStrip.fillRGB(255, 255, 255)
-    ledStrip.push_to_driver()
+    if not showThread.is_alive():
+      configName = "defaults"
+      startShow('01_-_Reading_Rainbow_Theme_Song.mp3')
+
+    #colorrotate(4, False)
+    
 
     start_time = datetime.datetime.now()
 
@@ -259,6 +263,11 @@ def doorRoutine(door: Door):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+      if(not showThread.is_alive() and showRunning):
+        showRunning = False
+        ledStrip.brightness = 255
+        ledStrip.fillRGB(255, 255, 255)
+        ledStrip.push_to_driver()
 
     time.sleep(2)
 
