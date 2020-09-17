@@ -17,6 +17,8 @@ DB_PATH='auth.db'
 # GPIO Pin for the door switch
 DOOR_SWITCH=26
 
+DOOR_SONG='01_-_Reading_Rainbow_Theme_Song.mp3'
+
 # ADS pins for voltage monitoring
 PANEL_PIN=-1
 BATTERY_PIN=-1

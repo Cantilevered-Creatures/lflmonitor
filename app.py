@@ -287,12 +287,8 @@ def startShow(songPath, callback = None):
   # if configName != "defaults":
   #   command.append("--config={}.cfg".format(configName))
 
-  if showThread is not None:
-    if showThread.is_alive():
-      showThread._stop()
-  #   if showProcess.poll() is None:
-  #     stopShow()
-  #     showProcess.wait()
+  if showThread.is_alive():
+    showThread._stop()
 
   ls.filepath = "{}/music/{}".format(os.curdir, songPath)
   ls.configPath = "{}.cfg".format(configName)
@@ -302,11 +298,6 @@ def startShow(songPath, callback = None):
 
   showThread = threading.Thread(target=showWatcher, args=[callback])
   showThread.start()
-
-  # my_env = os.environ.copy()
-  # my_env["SYNCHRONIZED_LIGHTS_HOME"] = "/home/pi/lightshowpi"
-  # showProcess = subprocess.Popen(command, cwd="/home/pi/lightshowpi", env=my_env)
-  # showProcess.poll()
 
 def showWatcher(callback):
   ls.play_song()
@@ -378,10 +369,12 @@ def logout():
   logout_user()
   return redirect(url_for('index'))
 
+playList = []
+
 @app.route('/musicPlayer', methods=['GET', 'POST'])
 @login_required
 def musicPlayer():
-  global intVolume, configName
+  global intVolume, configName, playList
   global MUSIC_FOLDER
 
   if request.method == 'POST':
@@ -405,6 +398,8 @@ def musicPlayer():
           fileMusic.save(os.path.join(MUSIC_FOLDER, filename))
       elif request.form['submit'] == 'stopMusic':
         stopShow()
+    elif 'updatePlayList' in request.form:
+      playList = request.form['playList'].split(',')
     elif 'playMusic' in request.form:
       configName = request.form['configName']
       startShow(request.form['playMusic'])
@@ -412,12 +407,13 @@ def musicPlayer():
   musicFiles = []
   it = os.scandir(MUSIC_FOLDER)
   for entry in it:
-    if not entry.name.startswith('.') and entry.is_file():
+    if not entry.name.startswith('.') and entry.is_file() and entry.name not in playList:
       musicFiles.append(entry.name)
 
   templateData = {
     'intVolume' : intVolume,
     'musicFiles' : musicFiles,
+    'playList' : playList,
     'configName' : configName
   }
 

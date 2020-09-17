@@ -1,4 +1,10 @@
 {% extends "base.html" %}
+{% block head %}
+  <style>
+    .playList, .songList { list-style-type: none; margin: 0; float: left; margin-right: 10px; background: #eee; padding: 5px; width: 100%;}
+    .playList li, .songList li { margin: 5px; padding: 5px; font-size: 1.2em; width: 100%; }
+  </style>
+{% endblock %}
 
 {% block script %}
     <script src="/static/music.js"></script>
@@ -37,11 +43,27 @@
     </div>
     <div class="form-group">
       <div class="row">
-        {% for musicFile in musicFiles %}
-          <div class="col-md-4">
-            <button type="submit" class="btn btn-link" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
-          </div>
-          {% if loop.index > 0 and loop.index % 3 == 0 %}
+        <div class="col-md-4">
+          <ul class="list-group songList connected" id="songList" name="songList">
+            {% for musicFile in musicFiles %}
+            <li class="list-group-item ui-draggable ui-draggable-handle">
+              <button type="submit" class="btn btn-link" draggable="true" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <ul class="list-group playList connected" id="playList" name="playList">
+            {% for item in playList %}
+            <li class="list-group-item ui-draggable ui-draggable-handle">
+              <button type="submit" class="btn btn-link" draggable="true" value="{{item}}" name="playMusic">{{ item }}</button>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-dark" id="updatePlayList" name="updatePlayList">Update Playlist</button>
+        </div>
       </div>
       <div class="row">
           {% endif %}
