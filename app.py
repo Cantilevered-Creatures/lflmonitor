@@ -14,17 +14,19 @@ from functools import total_ordering
 from pydub import AudioSegment
 import simpleaudio as sa
 
-import re
 import colorsys
-import time
 import datetime
+import json
 import math
-import threading
 import os
+import re
 import rrdtool
-import urllib
 import subprocess
 import sys
+import threading
+import time
+import urllib
+
 sys.path.insert(0, "./lightshowpi/py")
 os.environ["SYNCHRONIZED_LIGHTS_HOME"] = "{}/lightshowpi".format(os.curdir)
 
@@ -58,6 +60,8 @@ intVolume = 0
 configName = 'defaults'
 MUSIC_FOLDER = 'music'
 MUSIC_EXTENSIONS = {'wav', 'mp3'}
+playListFile = "{}/playlist.cfg".format(MUSIC_FOLDER)
+playList = []
 
 curSong = ''
 
@@ -369,8 +373,6 @@ def logout():
   logout_user()
   return redirect(url_for('index'))
 
-playList = []
-
 @app.route('/musicPlayer', methods=['GET', 'POST'])
 @login_required
 def musicPlayer():
@@ -400,6 +402,8 @@ def musicPlayer():
         stopShow()
     elif 'updatePlayList' in request.form:
       playList = request.form['playList'].split(',')
+      with open(playListFile, 'w') as filePlaylist:
+        json.dump(playList, filePlaylist, indent=2, separators=(',', ': '))
     elif 'playMusic' in request.form:
       configName = request.form['configName']
       startShow(request.form['playMusic'])
@@ -407,7 +411,7 @@ def musicPlayer():
   musicFiles = []
   it = os.scandir(MUSIC_FOLDER)
   for entry in it:
-    if not entry.name.startswith('.') and entry.is_file() and entry.name not in playList:
+    if not entry.name.startswith('.') and entry.is_file() and entry.name.rsplit('.',1)[1].lower() in MUSIC_EXTENSIONS and entry.name not in playList:
       musicFiles.append(entry.name)
 
   templateData = {
@@ -582,6 +586,10 @@ if(app.config['ENV']!='development'):
 else:
   app.config.from_pyfile('app.cfg.example')
 
+if os.path.exists(playListFile):
+  with open(playListFile, 'r') as filePlaylist:
+    playList = json.load(filePlaylist)
+
 ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
 ledStrip = Strip(ledDriver)
 
@@ -605,4 +613,3 @@ doorSwitchSTS = GPIO.LOW
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
-
