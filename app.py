@@ -4,7 +4,7 @@ from flask_security import Security, login_required, SQLAlchemySessionUserDatast
 from flask_restful import Resource, Api
 from database import dbconfig
 from models import User, Role
-from songinfo import Song
+from MusicInfo import MusicInfo
 
 from werkzeug.utils import secure_filename
 
@@ -59,9 +59,8 @@ secRainbow = 5
 intVolume = 0
 configName = 'defaults'
 MUSIC_FOLDER = 'music'
-MUSIC_EXTENSIONS = {'wav', 'mp3'}
-playListFile = "{}/playlist.cfg".format(MUSIC_FOLDER)
-playList = []
+
+musicInfo = MusicInfo(MUSIC_FOLDER)
 
 curSong = ''
 
@@ -281,24 +280,17 @@ def doorLightsOn():
     ledStrip.fillRGB(255, 255, 255)
     ledStrip.push_to_driver()
 
-curSong = Song()
-curSong.name = ""
-
-def startShow(songPath, callback = None):
-  global showThread, currentSong, configName
-  # command = ["sudo", "python3", "py/synchronized_lights.py", "--file=/home/pi/lflmonitor/music/{}".format(songPath)]
-
-  # if configName != "defaults":
-  #   command.append("--config={}.cfg".format(configName))
+def startShow(songName, callback = None):
+  global showThread, configName, musicInfo
+  
+  musicInfo.setCurrentSong(songName)
 
   if showThread.is_alive():
     showThread._stop()
 
-  ls.filepath = "{}/music/{}".format(os.curdir, songPath)
+  ls.filepath = musicInfo.currentSong.filePath
   ls.configPath = "{}.cfg".format(configName)
   ls.loadHC()
-
-  curSong.name = songPath
 
   showThread = threading.Thread(target=showWatcher, args=[callback])
   showThread.start()
@@ -318,53 +310,17 @@ def setVolume():
   command = ["amixer", "sset", "PCM", "{}%".format(intVolume)]
   subprocess.Popen(command)
 
-def wavCache(fileName):
-  filePrefix = fileName.rsplit('.', 1)[0].lower()
-  fileExt = fileName.rsplit('.', 1)[1].lower()
-
-  try: 
-    return AudioSegment.from_wav("{}/{}.wav".format(MUSIC_FOLDER, filePrefix))
-  except:
-    if fileExt == 'mp3':
-      tempSeg = AudioSegment.from_mp3("{}/{}".format(MUSIC_FOLDER, fileName))
-    else:
-      return AudioSegment.empty()
-
-  tempSeg.export("{}/{}.wav".format(MUSIC_FOLDER, filePrefix), format="wav")
-
-  return tempSeg
-
-
-def loadSong(fileName):
-  fileExt = fileName.rsplit('.', 1)[1].lower()
-
-  if fileExt == 'wav':
-    return AudioSegment.from_wav("{}/{}".format(MUSIC_FOLDER, fileName))
-  elif fileExt == 'mp3':
-    return wavCache(fileName)
-
-def playSong(fileName):
-  global player
-  audioSegment = loadSong(fileName)
-  player = sa.play_buffer(
-    audioSegment.raw_data,
-    num_channels=audioSegment.channels,
-    bytes_per_sample=audioSegment.sample_width,
-    sample_rate=audioSegment.frame_rate
-  )
-
-def stopSong():
-  player.stop()
-
 def allowed_musicfile(fileName):
   return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
 
 class currentSong(Resource):
   def get(self):
-    global currentSong, showThread
-    if not showThread.is_alive():
-      curSong.name = ""
-    return { 'name': curSong.name }
+    global musicInfo, showThread
+    tmpSongName = ""
+    if musicInfo.currentSong and showThread.is_alive():
+      tmpSongName = musicInfo.currentSong.name
+
+    return { 'name': tmpSongName }
 
 api.add_resource(currentSong, '/currentsong')
 
@@ -377,7 +333,7 @@ def logout():
 @login_required
 def musicPlayer():
   global intVolume, configName, playList
-  global MUSIC_FOLDER
+  global musicInfo
 
   if request.method == 'POST':
     if 'submit' in request.form:
@@ -402,22 +358,15 @@ def musicPlayer():
         stopShow()
     elif 'updatePlayList' in request.form:
       playList = request.form['playList'].split(',')
-      with open(playListFile, 'w') as filePlaylist:
-        json.dump(playList, filePlaylist, indent=2, separators=(',', ': '))
+      musicInfo.updatePlayList(playList)
     elif 'playMusic' in request.form:
       configName = request.form['configName']
       startShow(request.form['playMusic'])
 
-  musicFiles = []
-  it = os.scandir(MUSIC_FOLDER)
-  for entry in it:
-    if not entry.name.startswith('.') and entry.is_file() and entry.name.rsplit('.',1)[1].lower() in MUSIC_EXTENSIONS and entry.name not in playList:
-      musicFiles.append(entry.name)
-
   templateData = {
     'intVolume' : intVolume,
-    'musicFiles' : musicFiles,
-    'playList' : playList,
+    'musicFiles' : musicInfo.listMusic(),
+    'playList' : musicInfo.listPlayList(),
     'configName' : configName
   }
 
@@ -585,10 +534,6 @@ if(app.config['ENV']!='development'):
 
 else:
   app.config.from_pyfile('app.cfg.example')
-
-if os.path.exists(playListFile):
-  with open(playListFile, 'r') as filePlaylist:
-    playList = json.load(filePlaylist)
 
 ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
 ledStrip = Strip(ledDriver)
