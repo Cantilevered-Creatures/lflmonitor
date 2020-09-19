@@ -32,6 +32,8 @@ class MusicInfo():
             if tmpSong:
               self.playList.append(tmpSong)
 
+          self.updatePlayListOrder(playListNames)
+
   def addPlayList(self,name):
     tmpSong = self.getSong(name, True)
     if tmpSong:
@@ -48,6 +50,17 @@ class MusicInfo():
     
     with open(self.playListFile, 'w') as filePlaylist:
       json.dump(self.listPlayList(), filePlaylist, indent=2, separators=(',', ': '))
+
+    self.updatePlayListOrder(songNames)
+
+  def updatePlayListOrder(self, songNames):
+    for i, songName in enumerate(songNames):
+      if i == len(songNames)-1:
+        self.getPlayListItem(songName).setNext(i, self.getPlayListItem(songNames[0]))
+      else:
+        self.getPlayListItem(songName).setNext(i, self.getPlayListItem(songNames[i+1]))
+
+    self.playList.sort(key=lambda x: x.order)
 
   def listMusic(self):
     tmpList = []
