@@ -62,10 +62,8 @@ MUSIC_FOLDER = 'music'
 
 musicInfo = MusicInfo(MUSIC_FOLDER)
 
-curSong = ''
-
 songPlaying = False
-# showProcess = None
+playListRunning = False
 showThread = threading.Thread()
 
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
@@ -285,14 +283,12 @@ def startShow(songName, callback = None):
   
   musicInfo.setCurrentSong(songName)
 
-  if showThread.is_alive():
-    showThread._stop()
-
   ls.filepath = musicInfo.currentSong.filePath
   ls.configPath = "{}.cfg".format(configName)
   ls.loadHC()
 
   showThread = threading.Thread(target=showWatcher, args=[callback])
+  showThread.daemon = True
   showThread.start()
 
 def showWatcher(callback):
@@ -301,9 +297,23 @@ def showWatcher(callback):
     callback()
 
 def stopShow():
-  global showThread, currentSong
+  global showThread
   showThread._stop()
-  curSong.name = ""
+
+def startPlayList():
+  global playListRunning
+  if not playListRunning:
+    playListRunning = True
+    startShow(musicInfo.playList[0].name, playListNext)
+
+def stopPlayList():
+  global playListRunning
+  playListRunning = False
+
+def playListNext():
+  global playListRunning
+  if playListRunning:
+    startShow(musicInfo.currentSong.getNext().name, playListNext)
 
 def setVolume():
   global intVolume
@@ -356,12 +366,17 @@ def musicPlayer():
           fileMusic.save(os.path.join(MUSIC_FOLDER, filename))
       elif request.form['submit'] == 'stopMusic':
         stopShow()
-    elif 'updatePlayList' in request.form:
-      playList = request.form['playList'].split(',')
-      musicInfo.updatePlayList(playList)
     elif 'playMusic' in request.form:
       configName = request.form['configName']
       startShow(request.form['playMusic'])
+    elif 'startPlayList' in request.form:
+      configName = request.form['configName']
+      startPlayList()
+    elif 'stopPlayList' in request.form:
+      stopPlayList()
+    elif 'updatePlayList' in request.form:
+      playList = request.form['playList'].split(',')
+      musicInfo.updatePlayList(playList)
 
   templateData = {
     'intVolume' : intVolume,
