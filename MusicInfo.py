@@ -80,6 +80,9 @@ class MusicInfo():
     return None
 
   def setCurrentSong(self, name):
-    self.currentSong = self.getSong(name)
+    tmpSong = self.getSong(name)
+    if not tmpSong:
+      tmpSong = self.getPlayListItem(name)
+    self.currentSong = tmpSong
 
   
