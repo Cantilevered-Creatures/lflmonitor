@@ -59,7 +59,7 @@
           <ul class="list-group songList connected" id="songList" name="songList">
             {% for musicFile in musicFiles %}
             <li class="list-group-item ui-draggable ui-draggable-handle">
-              <button type="submit" class="btn btn-link" draggable="true" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
+              <button type="submit" class="btn btn-link ui-draggable-handle" draggable="true" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
             </li>
             {% endfor %}
           </ul>
