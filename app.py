@@ -326,7 +326,7 @@ def setVolume():
   subprocess.Popen(command)
 
 def allowed_musicfile(fileName):
-  return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in MUSIC_EXTENSIONS
+  return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in musicInfo.MUSIC_EXTENSIONS
 
 class currentSong(Resource):
   def get(self):
