@@ -59,7 +59,7 @@
           <ul class="list-group songList connected" id="songList" name="songList">
             {% for musicFile in musicFiles %}
             <li class="list-group-item ui-draggable ui-draggable-handle">
-              <button type="submit" class="btn btn-link ui-draggable-handle" draggable="true" value="{{musicFile}}" name="playMusic">{{ musicFile }}</button>
+              <button type="submit" class="btn btn-link ui-draggable-handle" draggable="true" value="{{musicFile.name}}" name="playMusic">{{ "{} - {}".format(musicFile.artist, musicFile.name) }}</button>
             </li>
             {% endfor %}
           </ul>
@@ -69,7 +69,7 @@
           <ul class="list-group playList connected" id="playList" name="playList">
             {% for item in playList %}
             <li class="list-group-item ui-draggable ui-draggable-handle">
-              <button type="submit" class="btn btn-link ui-draggable-handle" draggable="true" value="{{item}}" name="playMusic">{{ item }}</button>
+              <button type="submit" class="btn btn-link ui-draggable-handle" draggable="true" value="{{item.name}}" name="playMusic">{{ "{} - {}".format(item.artist, item.name) }}</button>
             </li>
             {% endfor %}
           </ul>

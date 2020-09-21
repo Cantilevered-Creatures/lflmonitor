@@ -313,7 +313,12 @@ def stopPlayList():
 def playListNext():
   global playListRunning
   if playListRunning:
-    startShow(musicInfo.currentSong.getNext().name, playListNext)
+    nextSong = musicInfo.currentSong.getNext()
+    # If the next song is None, start from the begining of the playList
+    if nextSong:
+      startShow(nextSong.name, playListNext)
+    else:
+      startShow(musicInfo.playList[0].name, playListNext)
 
 def setVolume():
   global intVolume
@@ -380,8 +385,8 @@ def musicPlayer():
 
   templateData = {
     'intVolume' : intVolume,
-    'musicFiles' : musicInfo.listMusic(),
-    'playList' : musicInfo.listPlayList(),
+    'musicFiles' : musicInfo.musicFiles,
+    'playList' : musicInfo.playList,
     'configName' : configName
   }
 

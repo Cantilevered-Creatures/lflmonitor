@@ -19,3 +19,7 @@ class Song():
 
   def getNext(self):
     return self.next
+
+  def removeNext(self):
+    self.order = None
+    self.next = None

@@ -46,7 +46,9 @@ class MusicInfo():
 
     for songName in self.listPlayList():
       if songName not in songNames:
-        self.musicFiles.append(self.getPlayListItem(songName, True))
+        tmpSong = self.getPlayListItem(songName, True)
+        tmpSong.removeNext()
+        self.musicFiles.append(tmpSong)
     
     with open(self.playListFile, 'w') as filePlaylist:
       json.dump(self.listPlayList(), filePlaylist, indent=2, separators=(',', ': '))
