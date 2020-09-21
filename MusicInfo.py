@@ -19,7 +19,7 @@ class MusicInfo():
     it = os.scandir(self.musicPath)
     for entry in it:
       if not entry.name.startswith('.') and entry.is_file() and entry.name.rsplit('.',1)[1].lower() in self.MUSIC_EXTENSIONS:
-        addSong(entry.path)
+        self.addSong(entry.path)
 
   def addSong(self, filePath):
     self.musicFiles.append(Song(filePath))
