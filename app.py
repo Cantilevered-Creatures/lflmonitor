@@ -369,6 +369,7 @@ def musicPlayer():
         if fileMusic and allowed_musicfile(fileMusic.filename):
           filename = secure_filename(fileMusic.filename)
           fileMusic.save(os.path.join(MUSIC_FOLDER, filename))
+          musicInfo.addSong(os.path.join(MUSIC_FOLDER, filename))
       elif request.form['submit'] == 'stopMusic':
         stopShow()
     elif 'playMusic' in request.form:
