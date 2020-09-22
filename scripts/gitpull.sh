@@ -4,7 +4,7 @@ curCommit=$(curl --silent https://api.github.com/repos/Cantilevered-Creatures/lf
 
 if [ "$curCommit" != "$([ -f ./lastCommit ] && cat ./lastCommit)" ]; then
   git pull -q --recurse-submodules
-  echo $curCommit > lastCommit
+  echo "$curCommit" > lastCommit
   # Use separate update script so changes are applied immediately
   ./update.sh
 fi

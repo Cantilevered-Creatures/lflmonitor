@@ -11,12 +11,7 @@ from werkzeug.utils import secure_filename
 from itertools import zip_longest
 from functools import total_ordering
 
-from pydub import AudioSegment
-import simpleaudio as sa
-
-import colorsys
 import datetime
-import json
 import math
 import os
 import re
@@ -27,6 +22,13 @@ import threading
 import time
 import urllib
 
+import RPi.GPIO as GPIO
+
+from bibliopixel.layout.strip import *
+from bibliopixel.drivers.driver_base import *
+from bibliopixel.drivers.SPI import SPI
+import bibliopixel.colors as colors
+
 sys.path.insert(0, "./lightshowpi/py")
 os.environ["SYNCHRONIZED_LIGHTS_HOME"] = "{}/lightshowpi".format(os.curdir)
 
@@ -34,13 +36,6 @@ from lightshowpi.py.synchronized_lights import Lightshow
 
 app = Flask(__name__)
 api = Api(app)
-
-import RPi.GPIO as GPIO
-
-from bibliopixel.layout.strip import *
-from bibliopixel.drivers.driver_base import *
-from bibliopixel.drivers.SPI import SPI
-import bibliopixel.colors as colors
 
 ls = Lightshow()
 
@@ -68,6 +63,7 @@ showThread = threading.Thread()
 
 rePath = re.compile("[^0-9]*([0-9]*)([smhdwMy]).*")
 
+
 @total_ordering
 class XMLFile(object):
   def __init__(self, path):
@@ -76,42 +72,60 @@ class XMLFile(object):
     match = rePath.search(path)
     self.shortDate = match.group(2)
     self.dateCount = int(match.group(1))
+
   @staticmethod
   def _is_valid_operand(other):
     return (hasattr(other, "shortDate") and hasattr(other, "dateCount"))
+
   def __eq__(self, other):
     if not self._is_valid_operand(other):
       return NotImplemented
     return ((shortDateOrder[self.shortDate], self.dateCount) == (shortDateOrder[other.shortDate], other.dateCount))
+
   def __ge__(self, other):
     if not self._is_valid_operand(other):
       return NotImplemented
     return (shortDateOrder[self.shortDate] >= shortDateOrder[other.shortDate] and self.dateCount >= other.dateCount)
+
   def __gt__(self, other):
     if not self._is_valid_operand(other):
       return NotImplemented
-    return (shortDateOrder[self.shortDate] > shortDateOrder[other.shortDate] or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate] and self.dateCount > other.dateCount))
+    return (
+      shortDateOrder[self.shortDate] > shortDateOrder[other.shortDate]
+      or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate]
+      and self.dateCount > other.dateCount)
+    )
+
   def __le__(self, other):
     if not self._is_valid_operand(other):
       return NotImplemented
     return (shortDateOrder[self.shortDate] <= shortDateOrder[other.shortDate] and self.dateCount <= other.dateCount)
+
   def __lt__(self, other):
     if not self._is_valid_operand(other):
       return NotImplemented
-    return (shortDateOrder[self.shortDate] < shortDateOrder[other.shortDate] or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate] and self.dateCount < other.dateCount))
+    return (
+      shortDateOrder[self.shortDate] < shortDateOrder[other.shortDate]
+      or (shortDateOrder[self.shortDate] == shortDateOrder[other.shortDate]
+      and self.dateCount < other.dateCount)
+    )
+
 
 class Door(object):
   def __init__(self):
     self.lock = threading.Lock()
     self._isRunning = False
+
   def start(self):
-      self.lock.acquire()
-      self._isRunning = True
-      self.lock.release()
+    self.lock.acquire()
+    self._isRunning = True
+    self.lock.release()
+
   def stop(self):
-      self.lock.acquire()
-      self._isRunning = False
-      self.lock.release()
+    self.lock.acquire()
+    self._isRunning = False
+    self.lock.release()
+
   def canIRun(self):
     self.lock.acquire()
     if (self._isRunning):
@@ -122,16 +136,14 @@ class Door(object):
       self.lock.release()
       return True
 
+
 door = Door()
 
-# if __name__ == '__main__':
-#   app.run(host='0.0.0.0',port=5000)
 
 @app.before_first_request
 def create_user():
-  #init_db()
   admin_role = [user_datastore.find_role('Admin')]
-  if(admin_role[0]==None):
+  if(admin_role[0] is None):
     user_datastore.create_role(name='Admin', description='Admin group')
     db.db_session.commit()
     admin_role = [user_datastore.find_role('Admin')]
@@ -140,9 +152,11 @@ def create_user():
     user_datastore.create_user(email=app.config['ADMIN_USER'], password=app.config['ADMIN_PASS'], roles=admin_role)
     db.db_session.commit()
 
+
 def grouper(iterable, n, fillvalue=None):
   args = [iter(iterable)] * n
   return zip_longest(*args, fillvalue=fillvalue)
+
 
 def voltageLogger():
   while(True):
@@ -159,19 +173,21 @@ def voltageLogger():
     rrdtool.update(app.config['RRD_PATH'], "N:{}:{}".format(vBattery, vPanel))
     time.sleep(app.config['RRD_INTERVAL'])
 
+
 def led_setbrightness(brightness: int):
-  if(brightness<0):
+  if(brightness < 0):
     brightness = 0
-  elif(brightness>255):
+  elif(brightness > 255):
     brightness = 255
-  
+
   ledStrip.brightness = brightness
   ledStrip.push_to_driver()
+
 
 def led_clear():
   ledStrip.all_off()
   ledStrip.push_to_driver()
-  
+
 
 def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   spacing = 360.0 / 16.0
@@ -181,20 +197,20 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
 
   tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
-  while (tSeconds < runSeconds) :
+  while (tSeconds < runSeconds):
     hue = int(time.time() * 100) % 360
 
     for x in range(app.config['LED_COUNT']):
       offset = x * spacing
       h = int((hue + offset) % 360)
-      ledStrip.setHSV(x, (h,255,255))
+      ledStrip.setHSV(x, (h, 255, 255))
 
-    brightness = math.ceil((tSeconds/runSeconds)*10)/10
+    brightness = math.ceil((tSeconds / runSeconds) * 10) / 10
 
     if(decreaseBrightness):
       brightness = 1 - brightness
 
-    ledStrip.set_brightness(int(brightness *255))
+    ledStrip.set_brightness(int(brightness * 255))
 
     ledStrip.push_to_driver()
 
@@ -204,6 +220,7 @@ def rainbow(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = 
   if clear:
     led_clear()
 
+
 def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: bool = False):
   hue = 0
 
@@ -211,18 +228,18 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
 
   tSeconds = (datetime.datetime.now() - start_time).total_seconds()
 
-  while (tSeconds < runSeconds) :
-    brightness = math.ceil((tSeconds/runSeconds)*10)/10
+  while (tSeconds < runSeconds):
+    brightness = math.ceil((tSeconds / runSeconds) * 10) / 10
 
     if(decreaseBrightness):
       brightness = 1 - brightness
 
     hue = int(time.time() * 100) % 360
     h = int(hue % 360)
-    
+
     led_setbrightness(int(brightness * 255))
 
-    ledStrip.fillHSV((h,255,255))
+    ledStrip.fillHSV((h, 255, 255))
 
     ledStrip.push_to_driver()
 
@@ -232,28 +249,29 @@ def colorrotate(runSeconds: int = 5, clear: bool = True, decreaseBrightness: boo
   if clear:
     led_clear()
 
+
 def takepicture(imageName: str):
   if(app.config['ENABLE_CAMERA']):
     with picamera.PiCamera() as camera:
       camera.resolution = (1920, 1080)
-      time.sleep(1) # Camera warm-up time
+      time.sleep(1)  # Camera warm-up time
       filename = 'images/%s.jpg' % imageName
       camera.capture(filename)
+
 
 def doorSwitch_callback(channel):
   t = threading.Thread(target=doorRoutine, args=[door])
   t.start()
 
+
 def doorRoutine(door: Door):
-  global showThread,configName
+  global showThread, configName
   if door.canIRun():
     showRunning = True
 
     if not showThread.is_alive():
       configName = "defaults"
       startShow('01_-_Reading_Rainbow_Theme_Song.mp3', doorLightsOn)
-
-    #colorrotate(4, False)
 
     start_time = datetime.datetime.now()
 
@@ -268,9 +286,10 @@ def doorRoutine(door: Door):
 
     takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
 
-    colorrotate(2,True,True)
+    colorrotate(2, True, True)
 
     door.stop()
+
 
 def doorLightsOn():
   if GPIO.input(doorSwitch) == 0:
@@ -278,9 +297,10 @@ def doorLightsOn():
     ledStrip.fillRGB(255, 255, 255)
     ledStrip.push_to_driver()
 
-def startShow(songName, callback = None):
+
+def startShow(songName, callback=None):
   global showThread, configName, musicInfo
-  
+
   musicInfo.setCurrentSong(songName)
 
   ls.filepath = musicInfo.currentSong.filePath
@@ -291,14 +311,17 @@ def startShow(songName, callback = None):
   showThread.daemon = True
   showThread.start()
 
+
 def showWatcher(callback):
   ls.play_song()
   if callback:
     callback()
 
+
 def stopShow():
   global showThread
   showThread._stop()
+
 
 def startPlayList():
   global playListRunning
@@ -306,9 +329,11 @@ def startPlayList():
     playListRunning = True
     startShow(musicInfo.playList[0].name, playListNext)
 
+
 def stopPlayList():
   global playListRunning
   playListRunning = False
+
 
 def playListNext():
   global playListRunning
@@ -320,13 +345,16 @@ def playListNext():
     else:
       startShow(musicInfo.playList[0].name, playListNext)
 
+
 def setVolume():
   global intVolume
   command = ["amixer", "sset", "PCM", "{}%".format(intVolume)]
   subprocess.Popen(command)
 
+
 def allowed_musicfile(fileName):
   return '.' in fileName and fileName.rsplit('.', 1)[1].lower() in musicInfo.MUSIC_EXTENSIONS
+
 
 class currentSong(Resource):
   def get(self):
@@ -335,19 +363,22 @@ class currentSong(Resource):
     if musicInfo.currentSong and showThread.is_alive():
       tmpSongName = musicInfo.currentSong.name
 
-    return { 'name': tmpSongName }
+    return {'name': tmpSongName}
+
 
 api.add_resource(currentSong, '/currentsong')
+
 
 @app.route('/logout')
 def logout():
   logout_user()
   return redirect(url_for('index'))
 
+
 @app.route('/musicPlayer', methods=['GET', 'POST'])
 @login_required
 def musicPlayer():
-  global intVolume, configName, playList
+  global intVolume, configName
   global musicInfo
 
   if request.method == 'POST':
@@ -385,13 +416,14 @@ def musicPlayer():
       musicInfo.updatePlayList(playList)
 
   templateData = {
-    'intVolume' : intVolume,
-    'musicFiles' : musicInfo.musicFiles,
-    'playList' : musicInfo.playList,
-    'configName' : configName
+    'intVolume': intVolume,
+    'musicFiles': musicInfo.musicFiles,
+    'playList': musicInfo.playList,
+    'configName': configName
   }
 
   return render_template('musicPlayer.html', **templateData)
+
 
 @app.route('/imagelist')
 @login_required
@@ -425,18 +457,19 @@ def imagelist():
     link_size=current_app.config.get('LINK_SIZE', 'sm'),
     alignment=current_app.config.get('LINK_ALIGNMENT', ''),
     show_single_page=current_app.config.get('SHOW_SINGLE_PAGE', 'sm')
-    )
+  )
 
-  pageimages = grouper(images[offset:offset+per_page], 3)
+  pageimages = grouper(images[offset: offset + per_page], 3)
 
   templateData = {
-    'pagination' : pagination,
+    'pagination': pagination,
     'images': pageimages,
-    'page' : page,
-    'per_page' : per_page
+    'page': page,
+    'per_page': per_page
   }
 
   return render_template('imagelist.html', **templateData)
+
 
 @app.route('/voltage')
 @login_required
@@ -452,21 +485,24 @@ def voltage():
   xmlFiles.sort()
 
   templateData = {
-    'xmlpaths' : xmlFiles
+    'xmlpaths': xmlFiles
   }
 
   return render_template('voltagegraph.html', **templateData)
+
 
 @app.route('/images/<path:path>')
 @app.route('/images/350/<path:path>')
 @login_required
 def send_image(path):
-    return send_from_directory('images', path)
+  return send_from_directory('images', path)
+
 
 @app.route('/xml/<path:path>')
 @login_required
 def send_xml(path):
-    return send_from_directory(app.config['XML_PATH'], path)
+  return send_from_directory(app.config['XML_PATH'], path)
+
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
@@ -505,10 +541,9 @@ def index():
       ledStrip.push_to_driver()
     elif request.form['submit'] == 'clearColor':
       led_clear()
-    
 
   templateData = {
-    'title' : 'HELLO!',
+    'title': 'HELLO!',
     'time': timeString,
     'door': doorSwitchSTS,
     'secRainbow': secRainbow,
@@ -523,8 +558,9 @@ def index():
 
   return render_template('index.html', **templateData)
 
+
 # picamera can only import on a pi
-if(app.config['ENV']!='development'):
+if(app.config['ENV'] != 'development'):
   import picamera
   import board
   import busio
@@ -559,7 +595,7 @@ else:
 ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
 ledStrip = Strip(ledDriver)
 
-intVolume=app.config['STARTING_VOLUME']
+intVolume = app.config['STARTING_VOLUME']
 
 setVolume()
 

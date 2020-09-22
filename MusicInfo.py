@@ -2,6 +2,7 @@ import json
 import os
 from Song import Song
 
+
 class MusicInfo():
 
   MUSIC_EXTENSIONS = {'mp3'}
@@ -18,7 +19,7 @@ class MusicInfo():
   def loadMusic(self):
     it = os.scandir(self.musicPath)
     for entry in it:
-      if not entry.name.startswith('.') and entry.is_file() and entry.name.rsplit('.',1)[1].lower() in self.MUSIC_EXTENSIONS:
+      if not entry.name.startswith('.') and entry.is_file() and entry.name.rsplit('.', 1)[1].lower() in self.MUSIC_EXTENSIONS:
         self.addSong(entry.path)
 
   def addSong(self, filePath):
@@ -37,7 +38,7 @@ class MusicInfo():
 
           self.updatePlayListOrder(playListNames)
 
-  def addPlayList(self,name):
+  def addPlayList(self, name):
     tmpSong = self.getSong(name, True)
     if tmpSong:
       self.playList.append(tmpSong)
@@ -52,7 +53,7 @@ class MusicInfo():
         tmpSong = self.getPlayListItem(songName, True)
         tmpSong.removeNext()
         self.musicFiles.append(tmpSong)
-    
+
     with open(self.playListFile, 'w') as filePlaylist:
       json.dump(self.listPlayList(), filePlaylist, indent=2, separators=(',', ': '))
 
@@ -60,10 +61,10 @@ class MusicInfo():
 
   def updatePlayListOrder(self, songNames):
     for i, songName in enumerate(songNames):
-      if i == len(songNames)-1:
+      if i == len(songNames) - 1:
         self.getPlayListItem(songName).setNext(i, self.getPlayListItem(songNames[0]))
       else:
-        self.getPlayListItem(songName).setNext(i, self.getPlayListItem(songNames[i+1]))
+        self.getPlayListItem(songName).setNext(i, self.getPlayListItem(songNames[i + 1]))
 
     self.playList.sort(key=lambda x: x.order)
 
@@ -87,7 +88,7 @@ class MusicInfo():
           else:
             return x
     return None
-  
+
   def getPlayListItem(self, name, pop=False):
     for i, x in enumerate(self.playList):
         if x.name == name:
@@ -102,5 +103,3 @@ class MusicInfo():
     if not tmpSong:
       tmpSong = self.getPlayListItem(name)
     self.currentSong = tmpSong
-
-  

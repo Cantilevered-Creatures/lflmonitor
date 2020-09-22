@@ -1,5 +1,6 @@
 import eyed3
 
+
 class Song():
 
   def __init__(self, filePath):
