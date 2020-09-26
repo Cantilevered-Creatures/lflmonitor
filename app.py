@@ -265,13 +265,13 @@ def doorSwitch_callback(channel):
 
 
 def doorRoutine(door: Door):
-  global showThread, configName
+  global showThread, configName, doorSong
   if door.canIRun():
     showRunning = True
 
     if not showThread.is_alive():
       configName = "defaults"
-      startShow('01_-_Reading_Rainbow_Theme_Song.mp3', doorLightsOn)
+      startShow(doorSong, doorLightsOn)
 
     start_time = datetime.datetime.now()
 
@@ -508,7 +508,7 @@ def send_xml(path):
 @login_required
 def index():
 
-  doorSwitchSTS = GPIO.input(doorSwitch)
+  doorSwitchSTS = 'Pressed' if GPIO.input(doorSwitch) else 'Not Pressed'
   now = datetime.datetime.now()
   timeString = now.strftime("%Y-%m-%d %H:%M")
   global secRainbow
@@ -597,6 +597,8 @@ ledStrip = Strip(ledDriver)
 
 intVolume = app.config['STARTING_VOLUME']
 
+doorSong = app.config['DOOR_SONG']
+
 setVolume()
 
 db = dbconfig(app.config['DB_PATH'])
@@ -610,7 +612,6 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 doorSwitch = app.config['DOOR_SWITCH']
-doorSwitchSTS = GPIO.LOW
 
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
