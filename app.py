@@ -271,6 +271,7 @@ def doorRoutine(door: Door):
 
     if not showThread.is_alive():
       configName = "defaults"
+      showRunning = False
       startShow(doorSong, doorLightsOn)
 
     start_time = datetime.datetime.now()
@@ -281,6 +282,9 @@ def doorRoutine(door: Door):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
+      if(not showThread.is_alive() and showRunning):
+        showRunning = False
+        doorLightsOn()
 
     time.sleep(2)
 
