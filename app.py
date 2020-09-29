@@ -5,6 +5,7 @@ from flask_restful import Resource, Api
 from database import dbconfig
 from models import User, Role
 from MusicInfo import MusicInfo
+from Show import Show
 
 from werkzeug.utils import secure_filename
 
@@ -29,15 +30,10 @@ from bibliopixel.drivers.driver_base import *
 from bibliopixel.drivers.SPI import SPI
 import bibliopixel.colors as colors
 
-sys.path.insert(0, "./lightshowpi/py")
-os.environ["SYNCHRONIZED_LIGHTS_HOME"] = "{}/lightshowpi".format(os.curdir)
-
-from lightshowpi.py.synchronized_lights import Lightshow
-
 app = Flask(__name__)
 api = Api(app)
 
-ls = Lightshow()
+show = Show()
 
 shortDateOrder = {
   's': 1,
@@ -260,19 +256,17 @@ def takepicture(imageName: str):
 
 
 def doorSwitch_callback(channel):
-  t = threading.Thread(target=doorRoutine, args=[door])
+  t = threading.Thread(target=doorRoutine, args=[door,show])
   t.start()
 
 
-def doorRoutine(door: Door):
-  global showThread, configName, doorSong
+def doorRoutine(door: Door, show: Show):
+  global doorSong, musicInfo
   if door.canIRun():
-    showRunning = True
-
-    if not showThread.is_alive():
-      configName = "defaults"
-      showRunning = False
-      startShow(doorSong, doorLightsOn)
+    if not show.isRunning:
+      show.setConfig("defaults")
+      musicInfo.setCurrentSong(doorSong)
+      show.startShow(musicInfo.currentSong.filePath)
 
     start_time = datetime.datetime.now()
 
@@ -282,8 +276,7 @@ def doorRoutine(door: Door):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-      if(not showThread.is_alive() and showRunning):
-        showRunning = False
+      if(not show.isRunning):
         doorLightsOn()
 
     time.sleep(2)
@@ -303,23 +296,10 @@ def doorLightsOn():
 
 
 def startShow(songName, callback=None):
-  global showThread, configName, musicInfo
+  global show, musicInfo
 
   musicInfo.setCurrentSong(songName)
-
-  ls.filepath = musicInfo.currentSong.filePath
-  ls.configPath = "{}.cfg".format(configName)
-  ls.loadHC()
-
-  showThread = threading.Thread(target=showWatcher, args=[callback])
-  showThread.daemon = True
-  showThread.start()
-
-
-def showWatcher(callback):
-  ls.play_song()
-  if callback:
-    callback()
+  show.startShow(musicInfo.currentSong.filePath)
 
 
 def stopShow():
@@ -331,7 +311,8 @@ def startPlayList():
   global playListRunning
   if not playListRunning:
     playListRunning = True
-    startShow(musicInfo.playList[0].name, playListNext)
+    musicInfo.setCurrentSong(musicInfo.playList[0].name)
+    show.startShow(musicInfo.currentSong.filePath, playListNext)
 
 
 def stopPlayList():
@@ -340,13 +321,15 @@ def stopPlayList():
 
 
 def playListNext():
-  global playListRunning
+  global playListRunning, show, musicInfo
   if playListRunning:
     nextSong = musicInfo.currentSong.getNext()
     # If the next song is None, start from the begining of the playList
     if nextSong:
-      startShow(nextSong.name, playListNext)
+      musicInfo.setCurrentSong(nextSong.name)
+      show.startShow(nextSong.filePath, playListNext)
     else:
+      musicInfo.setCurrentSong(musicInfo.playList[0].name)
       startShow(musicInfo.playList[0].name, playListNext)
 
 
@@ -362,9 +345,9 @@ def allowed_musicfile(fileName):
 
 class currentSong(Resource):
   def get(self):
-    global musicInfo, showThread
+    global musicInfo, show
     tmpSongName = ""
-    if musicInfo.currentSong and showThread.is_alive():
+    if musicInfo.currentSong and show.isRunning:
       tmpSongName = musicInfo.currentSong.name
 
     return {'name': tmpSongName}
@@ -382,8 +365,7 @@ def logout():
 @app.route('/musicPlayer', methods=['GET', 'POST'])
 @login_required
 def musicPlayer():
-  global intVolume, configName
-  global musicInfo
+  global intVolume, show, musicInfo
 
   if request.method == 'POST':
     if 'submit' in request.form:
@@ -408,10 +390,12 @@ def musicPlayer():
       elif request.form['submit'] == 'stopMusic':
         stopShow()
     elif 'playMusic' in request.form:
-      configName = request.form['configName']
-      startShow(request.form['playMusic'])
+      if not show.isRunning and not playListRunning:
+        show.setConfig(request.form['configName'])
+        musicInfo.setCurrentSong(request.form['playMusic'])
+        show.startShow(musicInfo.currentSong.filePath)
     elif 'startPlayList' in request.form:
-      configName = request.form['configName']
+      show.setConfig(request.form['configName'])
       startPlayList()
     elif 'stopPlayList' in request.form:
       stopPlayList()

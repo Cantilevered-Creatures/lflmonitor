@@ -1,10 +1,10 @@
-setInterval(function() {
+function refreshPlayingSong(){
   $.ajax({
     url: location.protocol + '//' + document.domain + ':' + location.port + '/currentsong'
   }).then(function(data){
     $("#playingSong")[0].innerText = data.name;
   });
-}, 5000);
+}
 
 function submitPlayList(){
   var playListItems = $("#playList button");
@@ -30,4 +30,9 @@ $(function () {
   $("#updatePlayList").click(function() {
     submitPlayList();
   });
+  refreshPlayingSong();
 });
+
+setInterval(function() {
+  refreshPlayingSong();
+}, 5000);
