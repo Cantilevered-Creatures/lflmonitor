@@ -2,3 +2,7 @@
 /__pycache__/
 /venv/
 /music/playlist.cfg
+/music/*.mp3
+/music/*.cfg
+/music/*.sync
+auth.db
