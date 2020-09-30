@@ -1,3 +1,4 @@
 [submodule "lightshowpi"]
 	path = lightshowpi
-	url = https://github.com/HoveringHalibut/lightshowpi
+	url = https://github.com/Cantilevered-Creatures/lightshowpi.git
+	branch = python3
