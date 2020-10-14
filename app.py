@@ -26,8 +26,8 @@ import urllib
 
 import RPi.GPIO as GPIO
 
-from bibliopixel.layout.strip import *
-from bibliopixel.drivers.driver_base import *
+from bibliopixel.layout.strip import Strip
+from bibliopixel.drivers.driver_base import DriverBase
 from bibliopixel.drivers.SPI import SPI
 import bibliopixel.colors as colors
 
@@ -40,7 +40,6 @@ from adafruit_ads1x15.analog_in import AnalogIn
 app = Flask(__name__)
 api = Api(app)
 
-
 # picamera can only import on a pi
 if(app.config['ENV'] != 'development'):  
   try:
@@ -49,6 +48,13 @@ if(app.config['ENV'] != 'development'):
     app.config.from_pyfile('app.cfg')
 else:
   app.config.from_pyfile('app.cfg.example')
+
+db = dbconfig(app.config['DB_PATH'], app)
+
+app.secret_key = app.config['SECRET_KEY']
+
+user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
+security = Security(app, user_datastore)
 
 cacheConfig = {}
 cacheConfig["CACHE_TYPE"] = app.config["CACHE_TYPE"]
@@ -138,8 +144,7 @@ class XMLFile(object):
 class Door(object):
   def __init__(self, cache: Cache):
     self.cache = cache
-    if not self.cache.get("doorRunning"):
-      self.cache.set("doorRunning", False)
+    self.cache.set("doorRunning", False)
 
   def start(self):
     self.cache.set("doorRunning", True)
@@ -573,13 +578,6 @@ doorSong = app.config['DOOR_SONG']
 
 setVolume()
 
-db = dbconfig(app.config['DB_PATH'])
-
-app.secret_key = app.config['SECRET_KEY']
-
-user_datastore = SQLAlchemySessionUserDatastore(db.db_session, User, Role)
-security = Security(app, user_datastore)
-
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
@@ -588,8 +586,6 @@ doorSwitch = app.config['DOOR_SWITCH']
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
-
-
 
 # Create the I2C bus
 i2c = busio.I2C(board.SCL, board.SDA)

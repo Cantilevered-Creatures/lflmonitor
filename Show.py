@@ -14,8 +14,7 @@ class Show(object):
 
   def __init__(self, cache: Cache):
     self.cache = cache
-    if not self.cache.get("showRunning"):
-      self.cache.set("showRunning", False)
+    self.cache.set("showRunning", False)
     self._thread = None
     self.ls = Lightshow()
 

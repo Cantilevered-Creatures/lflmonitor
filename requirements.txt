@@ -2,6 +2,7 @@ flask
 flask-paginate
 flask-security
 flask-restful
+flask-sqlalchemy-session
 Flask-Caching
 pyalsaaudio
 mutagen
