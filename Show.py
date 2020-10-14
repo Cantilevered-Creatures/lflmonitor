@@ -1,4 +1,5 @@
-from threading import Lock, Thread
+from threading import Thread
+from flask_caching import Cache
 
 import os
 import sys
@@ -11,20 +12,18 @@ from lightshowpi.py.synchronized_lights import Lightshow
 
 class Show(object):
 
-  def __init__(self):
-    self.lock = Lock()
-    self.isRunning = False
+  def __init__(self, cache: Cache):
+    self.cache = cache
+    if not self.cache.get("showRunning"):
+      self.cache.set("showRunning", False)
     self._thread = None
     self.ls = Lightshow()
 
   def canIRun(self):
-    self.lock.acquire()
-    if (self.isRunning):
-      self.lock.release()
+    if (self.cache.get("showRunning")):
       return False
     else:
-      self.isRunning = True
-      self.lock.release()
+      self.cache.set("showRunning", True)
       return True
 
   def setConfig(self, configName):
@@ -44,9 +43,10 @@ class Show(object):
   def showWatcher(self, callback):
     self.ls.play_song()
 
-    self.lock.acquire()
-    self.isRunning = False
-    self.lock.release()
+    self.cache.set("showRunning", False)
 
     if callback:
       callback()
+
+  def isRunning(self):
+    return self.cache.get("showRunning")

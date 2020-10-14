@@ -2,6 +2,7 @@ from flask import Flask, flash, request, render_template, redirect, url_for, sen
 from flask_paginate import Pagination, get_page_args
 from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, logout_user
 from flask_restful import Resource, Api
+from flask_caching import Cache
 from database import dbconfig
 from models import User, Role
 from MusicInfo import MusicInfo
@@ -30,10 +31,37 @@ from bibliopixel.drivers.driver_base import *
 from bibliopixel.drivers.SPI import SPI
 import bibliopixel.colors as colors
 
+import picamera
+import board
+import busio
+import adafruit_ads1x15.ads1115 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
+
 app = Flask(__name__)
 api = Api(app)
 
-show = Show()
+
+# picamera can only import on a pi
+if(app.config['ENV'] != 'development'):  
+  try:
+    app.config.from_pyfile('/etc/lflmonitor/app.cfg')
+  except FileNotFoundError:
+    app.config.from_pyfile('app.cfg')
+else:
+  app.config.from_pyfile('app.cfg.example')
+
+cacheConfig = {}
+cacheConfig["CACHE_TYPE"] = app.config["CACHE_TYPE"]
+cacheConfig["CACHE_DEFAULT_TIMEOUT"] = app.config["CACHE_DEFAULT_TIMEOUT"]
+
+if cacheConfig["CACHE_TYPE"] == "filesystem":
+  cacheConfig["CACHE_DIR"] = "/tmp/lflMonitorCache"
+elif cacheConfig["CACHE_TYPE"] == "uwsgi":
+  cacheConfig["CACHE_UWSGI_NAME"] = "lflmonitor"
+
+cache = Cache(app, config=cacheConfig)
+
+show = Show(cache)
 
 shortDateOrder = {
   's': 1,
@@ -108,32 +136,26 @@ class XMLFile(object):
 
 
 class Door(object):
-  def __init__(self):
-    self.lock = threading.Lock()
-    self._isRunning = False
+  def __init__(self, cache: Cache):
+    self.cache = cache
+    if not self.cache.get("doorRunning"):
+      self.cache.set("doorRunning", False)
 
   def start(self):
-    self.lock.acquire()
-    self._isRunning = True
-    self.lock.release()
+    self.cache.set("doorRunning", True)
 
   def stop(self):
-    self.lock.acquire()
-    self._isRunning = False
-    self.lock.release()
+    self.cache.set("doorRunning", False)
 
   def canIRun(self):
-    self.lock.acquire()
-    if (self._isRunning):
-      self.lock.release()
+    if (self.cache.get("doorRunning")):
       return False
     else:
-      self._isRunning = True
-      self.lock.release()
+      self.cache.set("doorRunning", True)
       return True
 
 
-door = Door()
+door = Door(cache)
 
 
 @app.before_first_request
@@ -263,7 +285,7 @@ def doorSwitch_callback(channel):
 def doorRoutine(door: Door, show: Show):
   global doorSong, musicInfo
   if door.canIRun():
-    if not show.isRunning:
+    if not show.isRunning():
       show.setConfig("defaults")
       musicInfo.setCurrentSong(doorSong)
       show.startShow(musicInfo.currentSong.filePath)
@@ -276,7 +298,7 @@ def doorRoutine(door: Door, show: Show):
       takepicture('{:%Y-%m-%d%H:%M:%S}'.format(datetime.datetime.now()))
       time.sleep(2)
       tSeconds = (datetime.datetime.now() - start_time).total_seconds()
-      if(not show.isRunning):
+      if(not show.isRunning()):
         doorLightsOn()
 
     time.sleep(2)
@@ -347,7 +369,7 @@ class currentSong(Resource):
   def get(self):
     global musicInfo, show
     tmpSongName = ""
-    if musicInfo.currentSong and show.isRunning:
+    if musicInfo.currentSong and show.isRunning():
       tmpSongName = musicInfo.currentSong.name
 
     return {'name': tmpSongName}
@@ -390,7 +412,7 @@ def musicPlayer():
       elif request.form['submit'] == 'stopMusic':
         stopShow()
     elif 'playMusic' in request.form:
-      if not show.isRunning and not playListRunning:
+      if not show.isRunning() and not playListRunning:
         show.setConfig(request.form['configName'])
         musicInfo.setCurrentSong(request.form['playMusic'])
         show.startShow(musicInfo.currentSong.filePath)
@@ -517,18 +539,14 @@ def index():
       time.sleep(1)
       takepicture('test')
       led_clear()
-    elif request.form['submit'] == 'StartSong':
-      songPlaying = True
-      t = threading.Thread(target=song, args=())
-      t.start()
-    elif request.form['submit'] == 'StopSong':
-      songPlaying = False
     elif request.form['submit'] == 'setColor':
       ledStrip.brightness = 255
       ledStrip.fillRGB(*colors.name_to_color(request.form['colorList']))
       ledStrip.push_to_driver()
     elif request.form['submit'] == 'clearColor':
       led_clear()
+    elif request.form['submit'] == 'testDoor':
+      doorSwitch_callback(38)
 
   templateData = {
     'title': 'HELLO!',
@@ -545,40 +563,6 @@ def index():
     print("Ignoring name error")
 
   return render_template('index.html', **templateData)
-
-
-# picamera can only import on a pi
-if(app.config['ENV'] != 'development'):
-  import picamera
-  import board
-  import busio
-  import adafruit_ads1x15.ads1115 as ADS
-  from adafruit_ads1x15.analog_in import AnalogIn
-
-  try:
-    app.config.from_pyfile('/etc/lflmonitor/app.cfg')
-  except FileNotFoundError:
-    app.config.from_pyfile('app.cfg')
-
-  # Create the I2C bus
-  i2c = busio.I2C(board.SCL, board.SDA)
-
-  # Create the ADC object using the I2C bus
-  try:
-    ads = ADS.ADS1115(i2c)
-
-    if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
-      # Create single-ended input on channel 0
-      chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
-      chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
-
-      t = threading.Thread(target=voltageLogger)
-      t.start()
-  except:
-    print("Error loading ADC module, voltage will not be logged.")
-
-else:
-  app.config.from_pyfile('app.cfg.example')
 
 ledDriver = SPI(ledtype=app.config['LED_TYPE'], num=app.config['LED_COUNT'], spi_interface='PYDEV', c_order=app.config['CHANNEL_ORDER'])
 ledStrip = Strip(ledDriver)
@@ -604,3 +588,22 @@ doorSwitch = app.config['DOOR_SWITCH']
 GPIO.setup(doorSwitch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 GPIO.add_event_detect(doorSwitch, GPIO.FALLING, callback=doorSwitch_callback, bouncetime=1000)
+
+
+
+# Create the I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# Create the ADC object using the I2C bus
+try:
+  ads = ADS.ADS1115(i2c)
+
+  if(app.config['BATTERY_PIN'] > -1 or app.config['PANEL_PIN'] > -1):
+    # Create single-ended input on channel 0
+    chanBattery = AnalogIn(ads, app.config['BATTERY_PIN'])
+    chanPanel = AnalogIn(ads, app.config['PANEL_PIN'])
+
+    t = threading.Thread(target=voltageLogger)
+    t.start()
+except:
+  print("Error loading ADC module, voltage will not be logged.")

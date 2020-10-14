@@ -54,10 +54,10 @@ class MusicInfo():
         tmpSong.removeNext()
         self.musicFiles.append(tmpSong)
 
+    self.updatePlayListOrder(songNames)
+
     with open(self.playListFile, 'w') as filePlaylist:
       json.dump(self.listPlayList(), filePlaylist, indent=2, separators=(',', ': '))
-
-    self.updatePlayListOrder(songNames)
 
   def updatePlayListOrder(self, songNames):
     for i, songName in enumerate(songNames):
